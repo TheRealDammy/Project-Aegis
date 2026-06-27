@@ -1,0 +1,173 @@
+/* =========================================================
+   AegisCommon.uss
+   Design system for Project Aegis — UI Toolkit implementation
+   Colour source of truth: 04_Art_Direction.md
+   Layout source of truth: 04_Art_Direction.md §Layout Principles
+   ========================================================= */
+
+
+/* ——— Root Container ———————————————————————————————————————
+   Full-screen flex column. Everything lives inside this.    */
+
+.root-container {
+    background-color: #111923;
+}
+
+
+/* ——— Top Bar ——————————————————————————————————————————————
+   48px fixed height (6 × 8px grid).
+   Aegis Blue fill, Wire Grey bottom border.                 */
+
+.top-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    height: 48px;
+    background-color: #1E3A5F;
+    border-bottom-width: 1px;
+    border-bottom-color: #2E4060;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.company-name {
+    color: #E8EDF3;
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+}
+
+.top-bar-stats {
+    flex-direction: row;
+    align-items: center;
+}
+
+.stat-value {
+    color: #E8EDF3;
+    font-size: 14px;
+    margin-left: 24px;
+    margin-right: 24px;
+}
+
+/* Speed control buttons — secondary style, 32×32 (4×8px grid) */
+.speed-controls {
+    flex-direction: row;
+    align-items: center;
+}
+
+.speed-btn {
+    width: 32px;
+    height: 32px;
+    margin-left: 4px;
+    background-color: #1A2535;
+    border-width: 1px;
+    border-color: #2E4060;
+    border-radius: 0;
+    color: #8A9BB5;
+    font-size: 12px;
+    -unity-text-align: middle-center;
+}
+
+.speed-btn:hover {
+    background-color: #22304A;
+    color: #E8EDF3;
+    border-color: #8A9BB5;
+}
+
+.speed-btn:active {
+    background-color: #0A8A8A;
+    border-color: #0A8A8A;
+    color: #E8EDF3;
+}
+
+/* Active speed button — Signal Teal fill (applied from C# to current speed) */
+.speed-btn--active {
+    background-color: #0A8A8A;
+    border-color: #0A8A8A;
+    color: #E8EDF3;
+}
+
+
+/* ——— Main Area ————————————————————————————————————————————
+   Flex row — side nav + content area side by side.
+   flex-grow: 1 fills all vertical space below the top bar.  */
+
+.main-area {
+    flex-direction: row;
+    flex-grow: 1;
+    align-items: stretch;  /* REQUIRED — Unity defaults to flex-start, not stretch */
+}
+
+/* ——— Side Nav —————————————————————————————————————————————
+   200px fixed width (art direction spec).
+   Panel Ink background, Wire Grey right border.             */
+
+.side-nav {
+    flex-direction: column;
+    flex-shrink: 0;
+    align-self: stretch;   /* Belt-and-suspenders — ensures height fills main-area */
+    width: 200px;
+    background-color: #1A2535;
+    border-right-width: 1px;
+    border-right-color: #2E4060;
+    padding-top: 8px;
+}
+
+/* Nav tab buttons — 48px tall (6×8px), full width, left-aligned text */
+.nav-btn {
+    height: 48px;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+    /* Left accent border: transparent by default, Signal Teal when active */
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    color: #8A9BB5;
+    font-size: 12px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    letter-spacing: 2px;
+}
+
+.nav-btn:hover {
+    background-color: #22304A;
+    color: #E8EDF3;
+}
+
+/* Active nav state — toggled from C# via AddToClassList / RemoveFromClassList */
+.nav-btn--active {
+    background-color: #22304A;
+    color: #E8EDF3;
+    border-left-color: #0A8A8A;
+}
+
+
+/* ——— Content Area —————————————————————————————————————————
+   Fills remaining width. Deep Slate background.
+   16px internal padding (art direction spec).               */
+
+
+.content-area {
+    flex-grow: 1;
+    align-self: stretch;   /* Same — fill full height of main-area */
+    background-color: #111923;
+    padding: 16px;
+}
+
+
+/* M0 placeholder label — replaced by real panels in M1+ */
+.panel-placeholder-label {
+    width: 100%;
+    height: 100%;
+    color: #2E4060;
+    font-size: 32px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}

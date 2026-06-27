@@ -1,0 +1,31 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Project/UI/USS/AegisCommon.uss?fileID=7433441132597879392&amp;guid=66d75c3794445e54591b4006bef3a0a5&amp;type=3#AegisCommon" />
+    <ui:VisualElement name="Root" class="root-container" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; flex-direction: column;">
+        <ui:VisualElement name="TopBar" class="top-bar">
+            <ui:Label name="CompanyNameLabel" text="AEGIS SYSTEMS" class="company-name" />
+            <ui:VisualElement name="TopBarStats" class="top-bar-stats">
+                <ui:Label name="CashLabel" text="£0" class="stat-value" />
+                <ui:Label name="WeekLabel" text="WEEK 1" class="stat-value" />
+            </ui:VisualElement>
+            <ui:VisualElement name="SpeedControls" class="speed-controls">
+                <ui:Button name="PauseButton" text="⏸" class="speed-btn" />
+                <ui:Button name="Speed1Button" text="▶" class="speed-btn" />
+                <ui:Button name="Speed2Button" text="▶▶" class="speed-btn" />
+                <ui:Button name="Speed4Button" text="▶▶▶" class="speed-btn" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="MainArea" class="main-area">
+            <ui:VisualElement name="SideNav" class="side-nav">
+                <ui:Button name="NavOverview" text="OVR" class="nav-btn" />
+                <ui:Button name="NavResearch" text="RES" class="nav-btn" />
+                <ui:Button name="NavEmployees" text="EMP" class="nav-btn" />
+                <ui:Button name="NavContracts" text="CON" class="nav-btn" />
+                <ui:Button name="NavMarket" text="MKT" class="nav-btn" />
+                <ui:Button name="NavWorld" text="WLD" class="nav-btn" />
+            </ui:VisualElement>
+            <ui:VisualElement name="ContentArea" class="content-area">
+                <ui:Label name="ActivePanelLabel" text="OVERVIEW" class="panel-placeholder-label" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
