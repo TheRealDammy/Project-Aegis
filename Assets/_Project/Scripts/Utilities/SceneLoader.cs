@@ -1,17 +1,30 @@
-using UnityEngine.SceneManagement;
+using UnityEngine;
 
 /// <summary>
-/// Central utility for all scene transitions.
-/// Never call SceneManager directly elsewhere in the project — route through here.
+/// Central utility for all scene transitions. Never call SceneManager directly
+/// elsewhere in the project — always route through here.
 /// </summary>
 public static class SceneLoader
 {
-    /// <summary>Loads the named scene, replacing the current scene.</summary>
+    // Lazy-initialised runner persists across scenes via DontDestroyOnLoad.
+    private static SceneLoaderRunner _runner;
+
+    private static SceneLoaderRunner Runner
+    {
+        get
+        {
+            if (_runner != null) return _runner;
+
+            var go = new GameObject("[SceneLoaderRunner]");
+            Object.DontDestroyOnLoad(go);
+            _runner = go.AddComponent<SceneLoaderRunner>();
+            return _runner;
+        }
+    }
+
+    /// <summary>Loads the named scene asynchronously, replacing the current scene.</summary>
     public static void Load(string sceneName)
     {
-        // Synchronous load is correct at M0 — all three scenes are empty.
-        // with a loading screen. The call signature stays identical, so
-        // nothing else in the project needs to change when that happens.
-        SceneManager.LoadSceneAsync(sceneName);
+        Runner.StartCoroutine(Runner.LoadSceneAsync(sceneName));
     }
 }

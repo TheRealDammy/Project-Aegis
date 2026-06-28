@@ -21,6 +21,7 @@ public class GameHudController : MonoBehaviour
     private Button _navContracts;
     private Button _navMarket;
     private Button _navWorld;
+    private Label _weekLabel;
 
     // Cached array for batch operations (active state toggle).
     // Order must match the UXML top-to-bottom order.
@@ -48,6 +49,16 @@ public class GameHudController : MonoBehaviour
         ActivatePanel(AegisConstants.PANEL_OVERVIEW, _navOverview);
     }
 
+    private void OnEnable()
+    {
+        TimeManager.OnWeekChanged += HandleWeekChanged;
+    }
+
+    private void OnDisable()
+    {
+        TimeManager.OnWeekChanged -= HandleWeekChanged;
+    }
+
     // — Private Methods ———————————————————————————————————————
 
     private void CacheElements()
@@ -60,6 +71,10 @@ public class GameHudController : MonoBehaviour
         _navContracts = _root.Q<Button>(AegisConstants.HUD_NAV_CONTRACTS);
         _navMarket = _root.Q<Button>(AegisConstants.HUD_NAV_MARKET);
         _navWorld = _root.Q<Button>(AegisConstants.HUD_NAV_WORLD);
+        _weekLabel = _root.Q<Label>(AegisConstants.HUD_WEEK_LABEL);
+
+        if (_weekLabel == null)
+            Debug.LogError("[GameHudController] WeekLabel not found in UXML.");
 
         _allNavButtons = new[]
         {
@@ -105,5 +120,11 @@ public class GameHudController : MonoBehaviour
         sourceButton.AddToClassList("nav-btn--active");
 
         Debug.Log($"[GameHud] Panel activated: {panelName}");
+    }
+
+    private void HandleWeekChanged(int newWeek)
+    {
+        if (_weekLabel != null)
+            _weekLabel.text = $"WEEK {newWeek}";
     }
 }
