@@ -1,103 +1,212 @@
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Owns the Game HUD UIDocument. Manages tab navigation and panel-switching.
-/// At M0: swaps a placeholder label. At M1+: shows/hides real panel VisualElements.
+/// Owns the Game HUD UIDocument. Manages tab navigation, speed controls,
+/// and delegates content to individual panel controllers.
 /// </summary>
 public class GameHudController : MonoBehaviour
 {
     // — Serialized Fields —————————————————————————————————————
     [SerializeField] private UIDocument _hudDocument;
+    [SerializeField] private TimeManager _timeManager;
+    [SerializeField] private ResearchManager _researchManager;
+    [SerializeField] private EmployeeManager _employeeManager;
+    [SerializeField] private FinanceManager _financeManager;
 
-    // — Private Fields ————————————————————————————————————————
-    private VisualElement _root;
-
-    private Label _activePanelLabel;
-
+    // — Nav Buttons ————————————————————————————————————————————
     private Button _navOverview;
     private Button _navResearch;
     private Button _navEmployees;
     private Button _navContracts;
     private Button _navMarket;
     private Button _navWorld;
-    private Label _weekLabel;
-
-    // Cached array for batch operations (active state toggle).
-    // Order must match the UXML top-to-bottom order.
     private Button[] _allNavButtons;
 
-    // — Unity Lifecycle ———————————————————————————————————————
+    // — Speed Buttons ——————————————————————————————————————————
+    private Button _pauseButton;
+    private Button _speed1Button;
+    private Button _speed2Button;
+    private Button _speed4Button;
+    private Button[] _allSpeedButtons;
+
+    // — HUD Labels —————————————————————————————————————————————
+    private Label _weekLabel;
+    private Label _cashLabel;
+
+    // — Panel Roots — all live in ContentArea simultaneously ——
+    // ActivatePanel shows one, hides the rest via display style.
+    private VisualElement _overviewPanelRoot;
+    private VisualElement _researchPanelRoot;
+    private VisualElement _employeesPanelRoot;
+    private VisualElement _contractsPanelRoot;
+    private VisualElement _marketPanelRoot;
+    private VisualElement _worldPanelRoot;
+
+    // — Panel Controllers ——————————————————————————————————————
+    private ResearchPanel _researchPanel;
+
+    // — Internal State —————————————————————————————————————————
+    private VisualElement _contentArea;
+
+    // — Unity Lifecycle ————————————————————————————————————————
     private void Awake()
     {
         if (_hudDocument == null)
         {
-            Debug.LogError("[GameHudController] UIDocument is not assigned in the Inspector.");
+            Debug.LogError("[GameHudController] UIDocument not assigned in Inspector.");
             return;
         }
 
-        _root = _hudDocument.rootVisualElement;
+        // TimeManager can be assigned in Inspector or found here.
+        // Inspector assignment is preferred — FindObjectOfType is a fallback.
+        if (_timeManager == null)
+        {
+            _timeManager = FindObjectOfType<TimeManager>();
+            if (_timeManager == null)
+                Debug.LogError("[GameHudController] TimeManager not found.");
+        }
 
-        CacheElements();
+        VisualElement root = _hudDocument.rootVisualElement;
+
+        CacheHUDElements(root);
+        BuildContentArea();
         RegisterNavCallbacks();
+        RegisterSpeedCallbacks();
     }
 
     private void Start()
     {
-        // Default to Overview on scene load.
-        // Called in Start (not Awake) so all Awake caching completes first.
+        // Default tab on load. Called in Start so all Awake caching is complete.
         ActivatePanel(AegisConstants.PANEL_OVERVIEW, _navOverview);
+        UpdateSpeedVisualState(1f);
     }
 
     private void OnEnable()
     {
         TimeManager.OnWeekChanged += HandleWeekChanged;
+        FinanceManager.OnCashChanged += HandleCashChanged;
+        ResearchManager.OnResearchCompleted += HandleResearchCompleted;
     }
 
     private void OnDisable()
     {
         TimeManager.OnWeekChanged -= HandleWeekChanged;
+        FinanceManager.OnCashChanged -= HandleCashChanged;
+        ResearchManager.OnResearchCompleted -= HandleResearchCompleted;
     }
 
-    // — Private Methods ———————————————————————————————————————
-
-    private void CacheElements()
+    // — Element Caching ————————————————————————————————————————
+    private void CacheHUDElements(VisualElement root)
     {
-        _activePanelLabel = _root.Q<Label>(AegisConstants.HUD_ACTIVE_PANEL_LABEL);
+        _weekLabel = root.Q<Label>(AegisConstants.HUD_WEEK_LABEL);
+        _cashLabel = root.Q<Label>(AegisConstants.HUD_CASH_LABEL);
 
-        _navOverview = _root.Q<Button>(AegisConstants.HUD_NAV_OVERVIEW);
-        _navResearch = _root.Q<Button>(AegisConstants.HUD_NAV_RESEARCH);
-        _navEmployees = _root.Q<Button>(AegisConstants.HUD_NAV_EMPLOYEES);
-        _navContracts = _root.Q<Button>(AegisConstants.HUD_NAV_CONTRACTS);
-        _navMarket = _root.Q<Button>(AegisConstants.HUD_NAV_MARKET);
-        _navWorld = _root.Q<Button>(AegisConstants.HUD_NAV_WORLD);
-        _weekLabel = _root.Q<Label>(AegisConstants.HUD_WEEK_LABEL);
-
-        if (_weekLabel == null)
-            Debug.LogError("[GameHudController] WeekLabel not found in UXML.");
-
+        _navOverview = root.Q<Button>(AegisConstants.HUD_NAV_OVERVIEW);
+        _navResearch = root.Q<Button>(AegisConstants.HUD_NAV_RESEARCH);
+        _navEmployees = root.Q<Button>(AegisConstants.HUD_NAV_EMPLOYEES);
+        _navContracts = root.Q<Button>(AegisConstants.HUD_NAV_CONTRACTS);
+        _navMarket = root.Q<Button>(AegisConstants.HUD_NAV_MARKET);
+        _navWorld = root.Q<Button>(AegisConstants.HUD_NAV_WORLD);
         _allNavButtons = new[]
         {
             _navOverview, _navResearch, _navEmployees,
             _navContracts, _navMarket, _navWorld
         };
 
-        // Validate — Q<>() returns null silently. Catch it here, not at click time.
-        if (_activePanelLabel == null)
-            Debug.LogError("[GameHudController] ActivePanelLabel not found. Check UXML name attribute.");
-
-        foreach (Button btn in _allNavButtons)
+        _pauseButton = root.Q<Button>(AegisConstants.HUD_PAUSE_BUTTON);
+        _speed1Button = root.Q<Button>(AegisConstants.HUD_SPEED1_BUTTON);
+        _speed2Button = root.Q<Button>(AegisConstants.HUD_SPEED2_BUTTON);
+        _speed4Button = root.Q<Button>(AegisConstants.HUD_SPEED4_BUTTON);
+        _allSpeedButtons = new[]
         {
-            if (btn == null)
-                Debug.LogError("[GameHudController] A nav button returned null from Q<>(). " +
-                               "Verify UXML name attributes match AegisConstants.");
+            _pauseButton, _speed1Button, _speed2Button, _speed4Button
+        };
+
+        _contentArea = root.Q<VisualElement>("ContentArea");
+
+        // Validate everything. Q<>() returns null silently — catch it here.
+        if (_weekLabel == null) Debug.LogError("[GameHudController] WeekLabel not found in UXML.");
+        if (_cashLabel == null) Debug.LogError("[GameHudController] CashLabel not found in UXML.");
+        if (_contentArea == null) Debug.LogError("[GameHudController] ContentArea not found in UXML. " +
+                                                  "Tab switching will not work.");
+
+        foreach (var btn in _allNavButtons)
+            if (btn == null) Debug.LogError("[GameHudController] Nav button returned null from Q<>(). " +
+                                             "Check UXML name attributes match AegisConstants.");
+
+        foreach (var btn in _allSpeedButtons)
+            if (btn == null) Debug.LogError("[GameHudController] Speed button returned null from Q<>().");
+    }
+
+    // — Content Area Setup —————————————————————————————————————
+
+    /// <summary>
+    /// Clears any UXML-defined children from ContentArea (removes the old
+    /// ActivePanelLabel placeholder) and builds one root VE per panel.
+    /// All roots start hidden — ActivatePanel reveals the correct one.
+    /// </summary>
+    private void BuildContentArea()
+    {
+        if (_contentArea == null) return;
+
+        // Remove the UXML placeholder label — panel roots replace it.
+        _contentArea.Clear();
+
+        _overviewPanelRoot = MakePanelRoot();
+        _researchPanelRoot = MakePanelRoot();
+        _employeesPanelRoot = MakePanelRoot();
+        _contractsPanelRoot = MakePanelRoot();
+        _marketPanelRoot = MakePanelRoot();
+        _worldPanelRoot = MakePanelRoot();
+
+        // Stub content for panels not yet implemented.
+        AddStubLabel(_overviewPanelRoot, "OVERVIEW");
+        AddStubLabel(_employeesPanelRoot, "EMPLOYEES");
+        AddStubLabel(_contractsPanelRoot, "CONTRACTS");
+        AddStubLabel(_marketPanelRoot, "MARKET");
+        AddStubLabel(_worldPanelRoot, "WORLD");
+
+        // Research panel — real content if managers are assigned.
+        if (_researchManager != null && _employeeManager != null)
+        {
+            _researchPanel = new ResearchPanel(
+                _researchPanelRoot, _researchManager, _employeeManager);
+            _researchPanel.OnAssignResearcherRequested += HandleAssignResearcher;
+            _researchPanel.OnCancelResearchRequested += HandleCancelResearch;
+            _researchPanel.Build();
+        }
+        else
+        {
+            AddStubLabel(_researchPanelRoot, "RESEARCH — assign managers in Inspector");
+            Debug.LogWarning("[GameHudController] ResearchManager or EmployeeManager not assigned. " +
+                             "ResearchPanel will not initialise.");
         }
     }
 
+    private VisualElement MakePanelRoot()
+    {
+        var ve = new VisualElement();
+        ve.style.flexGrow = 1f;
+        ve.style.flexShrink = 1f;
+        ve.style.display = DisplayStyle.None;
+        _contentArea.Add(ve);
+        return ve;
+    }
+
+    private void AddStubLabel(VisualElement parent, string text)
+    {
+        var label = new Label(text);
+        label.AddToClassList("panel-placeholder-label");
+        parent.Add(label);
+    }
+
+    // — Nav Callbacks ——————————————————————————————————————————
     private void RegisterNavCallbacks()
     {
-        // Each lambda captures its specific panel name and button reference.
-        // Not a loop variable capture — each closure is distinct.
+        if (_navOverview == null || _navResearch == null) return;
+
         _navOverview.clicked += () => ActivatePanel(AegisConstants.PANEL_OVERVIEW, _navOverview);
         _navResearch.clicked += () => ActivatePanel(AegisConstants.PANEL_RESEARCH, _navResearch);
         _navEmployees.clicked += () => ActivatePanel(AegisConstants.PANEL_EMPLOYEES, _navEmployees);
@@ -108,23 +217,118 @@ public class GameHudController : MonoBehaviour
 
     private void ActivatePanel(string panelName, Button sourceButton)
     {
-        // Update placeholder label — replaced by real panel show/hide logic at M1.
-        if (_activePanelLabel != null)
-            _activePanelLabel.text = panelName.ToUpper();
+        // Nav button state.
+        foreach (var btn in _allNavButtons)
+        {
+            if (btn != null)
+                btn.RemoveFromClassList("nav-btn--active");
+        }
 
-        // Toggle active class on nav buttons.
-        // Remove from all, then add to the clicked one.
-        foreach (Button btn in _allNavButtons)
-            btn.RemoveFromClassList("nav-btn--active");
+        if (sourceButton != null)
+            sourceButton.AddToClassList("nav-btn--active");
 
-        sourceButton.AddToClassList("nav-btn--active");
+        // Hide every panel, then show the one that matches.
+        SetPanelDisplay(_overviewPanelRoot, panelName == AegisConstants.PANEL_OVERVIEW);
+        SetPanelDisplay(_researchPanelRoot, panelName == AegisConstants.PANEL_RESEARCH);
+        SetPanelDisplay(_employeesPanelRoot, panelName == AegisConstants.PANEL_EMPLOYEES);
+        SetPanelDisplay(_contractsPanelRoot, panelName == AegisConstants.PANEL_CONTRACTS);
+        SetPanelDisplay(_marketPanelRoot, panelName == AegisConstants.PANEL_MARKET);
+        SetPanelDisplay(_worldPanelRoot, panelName == AegisConstants.PANEL_WORLD);
 
-        Debug.Log($"[GameHud] Panel activated: {panelName}");
+        // Refresh research content when it becomes visible.
+        if (panelName == AegisConstants.PANEL_RESEARCH)
+            _researchPanel?.Refresh();
+
+        Debug.Log($"[GameHud] Panel active: {panelName}");
     }
 
+    private static void SetPanelDisplay(VisualElement panel, bool visible)
+    {
+        if (panel != null)
+            panel.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+    }
+
+    // — Speed Callbacks ————————————————————————————————————————
+    private void RegisterSpeedCallbacks()
+    {
+        if (_pauseButton == null) return;
+
+        _pauseButton.clicked += () => SetSimSpeed(0f);
+        _speed1Button.clicked += () => SetSimSpeed(1f);
+        _speed2Button.clicked += () => SetSimSpeed(2f);
+        _speed4Button.clicked += () => SetSimSpeed(4f);
+    }
+
+    private void SetSimSpeed(float speed)
+    {
+        if (_timeManager == null) return;
+        _timeManager.SetSpeed(speed);
+        UpdateSpeedVisualState(speed);
+    }
+
+    private void UpdateSpeedVisualState(float activeSpeed)
+    {
+        foreach (var btn in _allSpeedButtons)
+            if (btn != null) btn.RemoveFromClassList("speed-btn--active");
+
+        Button active = activeSpeed switch
+        {
+            0f => _pauseButton,
+            1f => _speed1Button,
+            2f => _speed2Button,
+            4f => _speed4Button,
+            _ => _speed1Button
+        };
+
+        active?.AddToClassList("speed-btn--active");
+    }
+
+    // — Event Handlers —————————————————————————————————————————
     private void HandleWeekChanged(int newWeek)
     {
         if (_weekLabel != null)
             _weekLabel.text = $"WEEK {newWeek}";
+    }
+
+    private void HandleCashChanged(float newCash)
+    {
+        if (_cashLabel != null)
+            _cashLabel.text = $"£{newCash:N0}";
+    }
+
+    private void HandleResearchCompleted(ResearchNodeSO node)
+    {
+        // Refresh research panel if it's currently visible.
+        _researchPanel?.Refresh();
+    }
+
+    private void HandleAssignResearcher(string nodeId)
+    {
+        if (_employeeManager == null || _researchManager == null) return;
+
+        Employee researcher = null;
+        foreach (var emp in _employeeManager.Employees)
+        {
+            if (emp.Role == EmployeeRole.Researcher && string.IsNullOrEmpty(emp.Assignment))
+            {
+                researcher = emp;
+                break;
+            }
+        }
+
+        if (researcher == null)
+        {
+            Debug.Log("[GameHudController] No unassigned Researchers on roster.");
+            return;
+        }
+
+        _researchManager.AssignResearcher(nodeId, researcher);
+        _researchPanel?.Refresh();
+    }
+
+    private void HandleCancelResearch(string nodeId)
+    {
+        _researchManager?.CancelResearch(nodeId);
+        _researchPanel?.Refresh();
     }
 }

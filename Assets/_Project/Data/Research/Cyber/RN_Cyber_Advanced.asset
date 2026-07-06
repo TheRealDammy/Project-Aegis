@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77f1bf7d2e6624b4b8e57cf34b379578, type: 3}
+  m_Name: RN_Cyber_Advanced
+  m_EditorClassIdentifier: 
+  NodeId: cyber_advanced
+  DisplayName: Advanced Network Attack
+  Branch: 2
+  Prerequisites:
+  - {fileID: 11400000, guid: 38b188988b7517a4f8d0cd220e1e4bd8, type: 2}
+  BaseResearchCost: 18
+  UnlocksProductIds:
+  - prod_advanced_cyber

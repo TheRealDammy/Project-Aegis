@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77f1bf7d2e6624b4b8e57cf34b379578, type: 3}
+  m_Name: RN_Space_Recon
+  m_EditorClassIdentifier: 
+  NodeId: space_recon
+  DisplayName: Recon Satellites
+  Branch: 3
+  Prerequisites:
+  - {fileID: 11400000, guid: 4789fd0b26fcbcd4d9c6bd86b295eb80, type: 2}
+  BaseResearchCost: 10
+  UnlocksProductIds:
+  - prod_recon_satellites

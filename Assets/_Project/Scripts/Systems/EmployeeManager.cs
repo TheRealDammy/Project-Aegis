@@ -64,6 +64,25 @@ public class EmployeeManager : MonoBehaviour
     {
         FillPool();
         Debug.Log($"[EmployeeManager] Hiring pool initialised with {_hiringPool.Count} candidates.");
+
+        // TEMP — auto-hire first Researcher candidate for M2 testing.
+        // Remove this block when EMP panel hiring UI is implemented.
+        HireFirstResearcherForTesting();
+    }
+
+    private void HireFirstResearcherForTesting()
+    {
+        foreach (var candidate in _hiringPool)
+        {
+            if (candidate.Role == EmployeeRole.Researcher)
+            {
+                HireCandidate(candidate);
+                Debug.Log($"[DEV] Auto-hired researcher '{candidate.Name}' for testing. " +
+                          "Remove HireFirstResearcherForTesting() when EMP panel exists.");
+                return;
+            }
+        }
+        Debug.LogWarning("[DEV] No Researcher in initial pool — re-enter Play mode to try again.");
     }
 
     // — Public Methods —————————————————————————————————————

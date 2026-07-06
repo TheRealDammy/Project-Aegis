@@ -85,4 +85,33 @@ public static class AegisConstants
     public const string STAT_NETWORKING = "Networking";
     public const string STAT_LEADERSHIP = "Leadership";
     public const string STAT_STRATEGY = "Strategy";
+
+    // — Finance ————————————————————————————————————————————————
+    public const float STARTING_CASH = 100_000f;   // £100k per GDD Phase 1
+
+    // — Contract Pool ————————————————————————————————————————
+    public const int CONTRACT_POOL_SIZE = 4;
+    // Offer expiry is deferred — offers persist until accepted or declined (MVP).
+    // Add expiry weeks here when that mechanic is introduced.
+
+    // — Research Panel USS Classes ————————————————————————————
+    // Shared with ResearchPanel — never hardcode these strings in C#.
+    public const string USS_NODE_CARD = "node-card";
+    public const string USS_NODE_LOCKED = "node-card--locked";
+    public const string USS_NODE_AVAILABLE = "node-card--available";
+    public const string USS_NODE_IN_PROGRESS = "node-card--in-progress";
+    public const string USS_NODE_COMPLETE = "node-card--complete";
+    public const string USS_BRANCH_COLUMN = "branch-column";
+    public const string USS_BRANCH_HEADER = "branch-header";
+    public const string USS_NODE_NAME = "node-name";
+    public const string USS_NODE_STATUS = "node-status";
+    public const string USS_NODE_PROGRESS_BAR = "node-progress-bar";
+    public const string USS_NODE_PROGRESS_FILL = "node-progress-fill";
+    public const string USS_NODE_ASSIGN_BTN = "node-assign-btn";
+
+    // — Research Progression ———————————————————————————————
+    // Base researcher-weeks of progress per tick. Multiplied by researcher's
+    // ResearchSpeed stat when live employee assignment is wired in M3.
+    // At 1.0, a node costing 4 weeks takes 4 ticks at 1x speed = 8 real seconds.
+    public const float RESEARCH_PROGRESS_PER_TICK = 1.0f;
 }
