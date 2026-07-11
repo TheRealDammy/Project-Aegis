@@ -5,9 +5,8 @@ using Random = UnityEngine.Random;
 
 /// <summary>
 /// Generates contract offers from ContractTemplateSO data.
-/// Filters by player reputation tier and completed research.
-/// M2: generation and offer pool management.
-/// M3: acceptance, delivery, resolution, reputation impact.
+/// Manages offer pool, contract acceptance per DD-12 and DD-14,
+/// and contract delivery/resolution per DD-09.
 /// </summary>
 public class ContractManager : MonoBehaviour
 {
@@ -17,10 +16,12 @@ public class ContractManager : MonoBehaviour
     public static event Action<Contract> OnContractCompleted;
     public static event Action<Contract> OnContractFailed;
     public static event Action<IReadOnlyList<Contract>> OnOffersUpdated;
+    public static event Action<IReadOnlyList<Contract>> OnActiveContractsUpdated;
 
     // — Serialized Fields ——————————————————————————————————
     [SerializeField] private ContractTemplateSO[] _contractTemplates;
     [SerializeField] private ResearchManager _researchManager;
+    [SerializeField] private EmployeeManager _employeeManager;
 
     // — Public Properties ——————————————————————————————————
     public IReadOnlyList<Contract> AvailableContracts => _availableContracts;
@@ -29,14 +30,10 @@ public class ContractManager : MonoBehaviour
     // — Private State —————————————————————————————————————
     private readonly List<Contract> _availableContracts = new();
     private readonly List<Contract> _activeContracts = new();
-
-    // Seeded at Start from ResearchManager.NodeStates snapshot.
-    // Stays current via OnResearchCompleted subscription.
-    // Exception to event-only pattern — one-time read at startup only.
     private readonly HashSet<string> _completedNodeIds = new();
 
-    // Reputation hardcoded to Phase 1 pending ReputationManager (M3).
-    // Same pattern as QA-004. Do not remove this comment when wiring.
+    // Reputation tier — hardcoded to 1. QA-004 pattern.
+    // Wired to ReputationManager.OnTierChanged in M3.
     private int _playerRepTier = 1;
 
     private int _contractIdCounter = 0;
@@ -52,21 +49,67 @@ public class ContractManager : MonoBehaviour
     {
         TimeManager.OnWeekTick += HandleWeekTick;
         ResearchManager.OnResearchCompleted += HandleResearchCompleted;
+        ReputationManager.OnTierChanged += HandleTierChanged;
     }
 
     private void OnDisable()
     {
         TimeManager.OnWeekTick -= HandleWeekTick;
         ResearchManager.OnResearchCompleted -= HandleResearchCompleted;
+        ReputationManager.OnTierChanged -= HandleTierChanged;
     }
 
     // — Public Methods —————————————————————————————————————
 
     /// <summary>
-    /// Calculates contract success chance per DD-09/OQ-02.
-    /// Risk locks at acceptance — this is called once when the player accepts,
-    /// stored on the Contract, and never recalculated. See design decision record.
+    /// Accepts a contract offer per DD-12 and DD-14.
+    /// Risk is calculated immediately from the provided engineer list and locked permanently.
+    /// Engineers are marked as assigned. Contract moves to active pool.
     /// </summary>
+    public bool AcceptContract(Contract contract, IReadOnlyList<Employee> assignedEngineers)
+    {
+        if (!_availableContracts.Contains(contract))
+        {
+            Debug.LogWarning($"[ContractManager] AcceptContract: '{contract.ContractId}' " +
+                             "not in available pool.");
+            return false;
+        }
+
+        // DD-12: lock risk at acceptance. Never recalculates.
+        contract.LockedSuccessChance = CalculateSuccessChance(
+            assignedEngineers,
+            requiredEngineerCount: 1,   // M3: 1 required. Full staffing model is M4.
+            contractReputationTier: contract.ReputationTierRequired,
+            budgetAllocated: contract.BudgetAllocated,
+            contractBaseCost: contract.BaseCostGBP);
+
+        contract.LockedEngineerCount = assignedEngineers.Count;
+        contract.IsActive = true;
+
+        // Assign engineers — marked so they don't double-book on other contracts.
+        foreach (Employee eng in assignedEngineers)
+        {
+            eng.Assignment = contract.ContractId;
+            contract.AssignedEmployeeNames.Add(eng.Name);
+        }
+
+        _availableContracts.Remove(contract);
+        _activeContracts.Add(contract);
+
+        OnContractAccepted?.Invoke(contract);
+        OnActiveContractsUpdated?.Invoke(_activeContracts);
+
+        // Replace the accepted offer immediately so pool stays at target size.
+        TopUpOfferPool();
+
+        Debug.Log($"[ContractManager] Accepted: {contract.ContractId} | " +
+                  $"Risk: {contract.LockedSuccessChance:F1}% | " +
+                  $"Engineers: {assignedEngineers.Count} | " +
+                  $"Deadline: {contract.DeadlineWeeks} weeks.");
+        return true;
+    }
+
+    /// <summary>Calculates contract success chance per DD-09. See formula in ContractManager.cs.</summary>
     public float CalculateSuccessChance(
         IReadOnlyList<Employee> assignedEngineers,
         int requiredEngineerCount,
@@ -85,7 +128,7 @@ public class ContractManager : MonoBehaviour
         return Mathf.Clamp(raw, AegisConstants.MIN_CONTRACT_CHANCE, AegisConstants.MAX_CONTRACT_CHANCE);
     }
 
-    // — Private Methods ————————————————————————————————————
+    // — Private: Tick —————————————————————————————————————
 
     private void HandleWeekTick()
     {
@@ -93,67 +136,119 @@ public class ContractManager : MonoBehaviour
         TopUpOfferPool();
     }
 
+    private void TickActiveContracts()
+    {
+        var toResolve = new List<Contract>();
+
+        foreach (Contract contract in _activeContracts)
+        {
+            contract.WeeksRemaining--;
+            if (contract.WeeksRemaining <= 0)
+                toResolve.Add(contract);
+        }
+
+        foreach (Contract contract in toResolve)
+            ResolveContract(contract);
+
+        if (toResolve.Count > 0)
+            OnActiveContractsUpdated?.Invoke(_activeContracts);
+    }
+
+    private void ResolveContract(Contract contract)
+    {
+        _activeContracts.Remove(contract);
+
+        // Roll against the locked success chance.
+        bool success = Random.Range(0f, 100f) < contract.LockedSuccessChance;
+
+        if (success)
+        {
+            OnContractCompleted?.Invoke(contract);
+            Debug.Log($"[ContractManager] SUCCESS: {contract.ContractId} — " +
+                      $"£{contract.BaseRewardGBP:N0} earned.");
+        }
+        else
+        {
+            OnContractFailed?.Invoke(contract);
+            Debug.Log($"[ContractManager] FAILED: {contract.ContractId} — " +
+                      $"Penalty: £{contract.BaseCostGBP * AegisConstants.CONTRACT_FAILURE_PENALTY_RATIO:N0}.");
+        }
+
+        // Unassign engineers. ContractManager owns this step because it
+        // has both the contract's assigned list and the EmployeeManager reference.
+        FreeAssignedEngineers(contract);
+    }
+
+    private void FreeAssignedEngineers(Contract contract)
+    {
+        if (_employeeManager == null) return;
+
+        foreach (string name in contract.AssignedEmployeeNames)
+        {
+            Employee emp = _employeeManager.GetEmployeeByName(name);
+            if (emp != null)
+                emp.Assignment = null;
+        }
+    }
+
+    // — Private: Events ————————————————————————————————————
+
     private void HandleResearchCompleted(ResearchNodeSO node)
     {
         _completedNodeIds.Add(node.NodeId);
-        // New research may unlock previously filtered templates — refresh the pool.
-        TopUpOfferPool();
+        TopUpOfferPool(); // New tech may unlock previously filtered templates.
     }
+
+    private void HandleTierChanged(int newTier)
+    {
+        _playerRepTier = newTier;
+        TopUpOfferPool(); // Higher tier may unlock new contract categories.
+    }
+
+    // — Private: Offer Pool ————————————————————————————————
 
     private void SeedCompletedResearch()
     {
         if (_researchManager == null) return;
-
         foreach (var kvp in _researchManager.NodeStates)
-        {
             if (kvp.Value == ResearchNodeState.Complete)
                 _completedNodeIds.Add(kvp.Key);
-        }
     }
 
     private void TopUpOfferPool()
     {
         if (_contractTemplates == null || _contractTemplates.Length == 0) return;
 
-        var eligible = GetEligibleTemplates();
+        List<ContractTemplateSO> eligible = GetEligibleTemplates();
         if (eligible.Count == 0) return;
 
         while (_availableContracts.Count < AegisConstants.CONTRACT_POOL_SIZE)
         {
-            var template = eligible[Random.Range(0, eligible.Count)];
-            var contract = GenerateFromTemplate(template);
+            ContractTemplateSO template = eligible[Random.Range(0, eligible.Count)];
+            Contract contract = GenerateFromTemplate(template);
             _availableContracts.Add(contract);
             OnContractOffered?.Invoke(contract);
         }
 
-        if (_availableContracts.Count > 0)
-            OnOffersUpdated?.Invoke(_availableContracts);
+        OnOffersUpdated?.Invoke(_availableContracts);
     }
 
     private List<ContractTemplateSO> GetEligibleTemplates()
     {
         var eligible = new List<ContractTemplateSO>();
-
-        foreach (var template in _contractTemplates)
+        foreach (ContractTemplateSO template in _contractTemplates)
         {
             if (template == null) continue;
-
-            // Reputation gate.
             if (template.MinReputationTier > _playerRepTier) continue;
-
-            // Research gate — null means no tech required.
             if (template.RequiredResearch != null &&
                 !_completedNodeIds.Contains(template.RequiredResearch.NodeId)) continue;
-
             eligible.Add(template);
         }
-
         return eligible;
     }
 
     private Contract GenerateFromTemplate(ContractTemplateSO template)
     {
-        // Reputation normalised to 0–1 for AnimationCurve evaluation.
         float normalisedRep = (_playerRepTier - 1) / 4f;
         float rewardMultiplier = template.RewardScaleByReputation != null
             ? template.RewardScaleByReputation.Evaluate(normalisedRep)
@@ -162,56 +257,38 @@ public class ContractManager : MonoBehaviour
         return new Contract
         {
             ContractId = $"CON_{++_contractIdCounter:D4}",
-            ClientRegion = "Unknown Region", // M3: wire to WorldEventManager
+            ClientRegion = "Unknown Region",
             ContractCategory = template.ContractCategory,
             ReputationTierRequired = template.MinReputationTier,
             BaseRewardGBP = template.BaseRewardGBP * rewardMultiplier,
-            BaseCostGBP = template.BaseRewardGBP * 0.3f, // 30% cost ratio — SD to review
+            BaseCostGBP = template.BaseRewardGBP * 0.3f,
             DeadlineWeeks = template.BaseDeadlineWeeks,
             WeeksRemaining = template.BaseDeadlineWeeks,
             BudgetAllocated = 0f,
-            IsActive = false
+            IsActive = false,
+            LockedSuccessChance = 0f,
+            LockedEngineerCount = 0
         };
     }
 
-    private void TickActiveContracts()
-    {
-        var toResolve = new List<Contract>();
+    // — Private: Risk Formula ——————————————————————————————
 
-        foreach (var contract in _activeContracts)
-        {
-            contract.WeeksRemaining--;
-            if (contract.WeeksRemaining <= 0)
-                toResolve.Add(contract);
-        }
-
-        // M3: resolve with reputation impact and finance credit.
-        // M2: log only — resolution logic not yet implemented.
-        foreach (var contract in toResolve)
-        {
-            _activeContracts.Remove(contract);
-            Debug.Log($"[ContractManager] Contract {contract.ContractId} expired — resolution pending M3.");
-        }
-    }
-
-    // — Risk Formula (unchanged from M1, kept here for co-location) ——
     private float CalculateTeamBonus(IReadOnlyList<Employee> engineers, int requiredCount)
     {
         float staffingFactor = Mathf.Min(1f, (float)engineers.Count / requiredCount);
         float total = 0f;
-
-        foreach (var eng in engineers)
+        foreach (Employee eng in engineers)
         {
             total +=
                 eng.GetModifiedStat(AegisConstants.STAT_EFFICIENCY) * 0.5f +
                 eng.GetModifiedStat(AegisConstants.STAT_INTELLIGENCE) * 0.3f +
                 eng.GetModifiedStat(AegisConstants.STAT_CREATIVITY) * 0.2f;
         }
-
-        return ((total / engineers.Count) * staffingFactor - 50f) * AegisConstants.TEAM_BONUS_MULTIPLIER;
+        return ((total / engineers.Count) * staffingFactor - 50f)
+               * AegisConstants.TEAM_BONUS_MULTIPLIER;
     }
 
-    private float CalculateComplexityPenalty(int tier) =>
+    private static float CalculateComplexityPenalty(int tier) =>
         (tier - 1) * AegisConstants.COMPLEXITY_PENALTY_PER_TIER;
 
     private float CalculateBudgetBonus(float allocated, float baseCost)

@@ -188,6 +188,8 @@ MonoBehaviour:
   _researchManager: {fileID: 549565405}
   _employeeManager: {fileID: 1119569432}
   _financeManager: {fileID: 1914187426}
+  _contractManager: {fileID: 2026381468}
+  _reputationManager: {fileID: 1006201366}
 --- !u!1 &549565404
 GameObject:
   m_ObjectHideFlags: 0
@@ -235,6 +237,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4789fd0b26fcbcd4d9c6bd86b295eb80, type: 2}
   - {fileID: 11400000, guid: 6ef7ff594f969ab47bc8c0378cfe075d, type: 2}
   - {fileID: 11400000, guid: 69527d16eb007804f80b993b61c4c100, type: 2}
+  _employeeManager: {fileID: 1119569432}
 --- !u!4 &549565406
 Transform:
   m_ObjectHideFlags: 0
@@ -431,6 +434,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1006201365
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1006201367}
+  - component: {fileID: 1006201366}
+  m_Layer: 0
+  m_Name: ReputationManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1006201366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1006201365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 320bce6d8396a5542b51d79b84ea0d2f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1006201367
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1006201365}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1119569431
 GameObject:
   m_ObjectHideFlags: 0
@@ -461,6 +508,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _availableTraits: []
+  _autoHireForTesting: 1
 --- !u!4 &1119569433
 Transform:
   m_ObjectHideFlags: 0
@@ -556,6 +604,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f770b88c08411524b8f7da42d2e80809, type: 2}
   - {fileID: 11400000, guid: e1e1d6af3163d584aadb52d89c5c1d04, type: 2}
   _researchManager: {fileID: 549565405}
+  _employeeManager: {fileID: 1119569432}
 --- !u!4 &2026381469
 Transform:
   m_ObjectHideFlags: 0
@@ -582,3 +631,4 @@ SceneRoots:
   - {fileID: 1119569433}
   - {fileID: 1914187427}
   - {fileID: 549565406}
+  - {fileID: 1006201367}

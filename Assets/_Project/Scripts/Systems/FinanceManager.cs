@@ -25,8 +25,19 @@ public class FinanceManager : MonoBehaviour
         Debug.Log($"[FinanceManager] Starting cash: £{CashBalance:N0}");
     }
 
-    private void OnEnable() => TimeManager.OnWeekTick += HandleWeekTick;
-    private void OnDisable() => TimeManager.OnWeekTick -= HandleWeekTick;
+    private void OnEnable()
+    {
+        TimeManager.OnWeekTick += HandleWeekTick;
+        ContractManager.OnContractCompleted += HandleContractCompleted;
+        ContractManager.OnContractFailed += HandleContractFailed;
+    }
+
+    private void OnDisable()
+    {
+        TimeManager.OnWeekTick -= HandleWeekTick;
+        ContractManager.OnContractCompleted -= HandleContractCompleted;
+        ContractManager.OnContractFailed -= HandleContractFailed;
+    }
 
     // — Public Methods —————————————————————————————————————
 
@@ -70,5 +81,17 @@ public class FinanceManager : MonoBehaviour
         DeductCost(totalSalaries);
         Debug.Log($"[FinanceManager] Weekly salaries deducted: £{totalSalaries:N0}. " +
                   $"Balance: £{CashBalance:N0}");
+    }
+
+    private void HandleContractCompleted(Contract contract)
+    {
+        AddRevenue(contract.BaseRewardGBP);
+        Debug.Log($"[FinanceManager] Revenue received: £{contract.BaseRewardGBP:N0}.");
+    }
+
+    private void HandleContractFailed(Contract contract)
+    {
+        float penalty = contract.BaseCostGBP * AegisConstants.CONTRACT_FAILURE_PENALTY_RATIO;
+        if (penalty > 0f) DeductCost(penalty);
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -14,6 +15,8 @@ public class GameHudController : MonoBehaviour
     [SerializeField] private ResearchManager _researchManager;
     [SerializeField] private EmployeeManager _employeeManager;
     [SerializeField] private FinanceManager _financeManager;
+    [SerializeField] private ContractManager _contractManager;
+    [SerializeField] private ReputationManager _reputationManager;
 
     // — Nav Buttons ————————————————————————————————————————————
     private Button _navOverview;
@@ -34,6 +37,7 @@ public class GameHudController : MonoBehaviour
     // — HUD Labels —————————————————————————————————————————————
     private Label _weekLabel;
     private Label _cashLabel;
+    private Label _reputationLabel;
 
     // — Panel Roots — all live in ContentArea simultaneously ——
     // ActivatePanel shows one, hides the rest via display style.
@@ -46,9 +50,13 @@ public class GameHudController : MonoBehaviour
 
     // — Panel Controllers ——————————————————————————————————————
     private ResearchPanel _researchPanel;
+    private ContractPanel _contractPanel;
 
     // — Internal State —————————————————————————————————————————
     private VisualElement _contentArea;
+
+    // Add this field to track the currently active panel name
+    private string _activePanelName;
 
     // — Unity Lifecycle ————————————————————————————————————————
     private void Awake()
@@ -63,7 +71,7 @@ public class GameHudController : MonoBehaviour
         // Inspector assignment is preferred — FindObjectOfType is a fallback.
         if (_timeManager == null)
         {
-            _timeManager = FindObjectOfType<TimeManager>();
+            _timeManager = FindFirstObjectByType<TimeManager>();
             if (_timeManager == null)
                 Debug.LogError("[GameHudController] TimeManager not found.");
         }
@@ -78,7 +86,11 @@ public class GameHudController : MonoBehaviour
 
     private void Start()
     {
-        // Default tab on load. Called in Start so all Awake caching is complete.
+        // Build() deferred from Awake — ResearchManager._nodeById is guaranteed
+        // populated by now since all Awake() calls complete before any Start().
+        _researchPanel?.Build();
+        _contractPanel?.Build();
+
         ActivatePanel(AegisConstants.PANEL_OVERVIEW, _navOverview);
         UpdateSpeedVisualState(1f);
     }
@@ -88,6 +100,11 @@ public class GameHudController : MonoBehaviour
         TimeManager.OnWeekChanged += HandleWeekChanged;
         FinanceManager.OnCashChanged += HandleCashChanged;
         ResearchManager.OnResearchCompleted += HandleResearchCompleted;
+        ReputationManager.OnReputationChanged += HandleReputationChanged;
+        ContractManager.OnContractCompleted += HandleContractResolved;
+        ContractManager.OnContractFailed += HandleContractResolved;
+        ContractManager.OnOffersUpdated += HandleOffersUpdated;
+        ContractManager.OnActiveContractsUpdated += HandleActiveUpdated;
     }
 
     private void OnDisable()
@@ -95,6 +112,11 @@ public class GameHudController : MonoBehaviour
         TimeManager.OnWeekChanged -= HandleWeekChanged;
         FinanceManager.OnCashChanged -= HandleCashChanged;
         ResearchManager.OnResearchCompleted -= HandleResearchCompleted;
+        ReputationManager.OnReputationChanged -= HandleReputationChanged;
+        ContractManager.OnContractCompleted -= HandleContractResolved;
+        ContractManager.OnContractFailed -= HandleContractResolved;
+        ContractManager.OnOffersUpdated -= HandleOffersUpdated;
+        ContractManager.OnActiveContractsUpdated -= HandleActiveUpdated;
     }
 
     // — Element Caching ————————————————————————————————————————
@@ -102,6 +124,7 @@ public class GameHudController : MonoBehaviour
     {
         _weekLabel = root.Q<Label>(AegisConstants.HUD_WEEK_LABEL);
         _cashLabel = root.Q<Label>(AegisConstants.HUD_CASH_LABEL);
+        _reputationLabel = root.Q<Label>(AegisConstants.HUD_REPUTATION_LABEL);
 
         _navOverview = root.Q<Button>(AegisConstants.HUD_NAV_OVERVIEW);
         _navResearch = root.Q<Button>(AegisConstants.HUD_NAV_RESEARCH);
@@ -131,6 +154,8 @@ public class GameHudController : MonoBehaviour
         if (_cashLabel == null) Debug.LogError("[GameHudController] CashLabel not found in UXML.");
         if (_contentArea == null) Debug.LogError("[GameHudController] ContentArea not found in UXML. " +
                                                   "Tab switching will not work.");
+        if (_reputationLabel == null)
+            Debug.LogError("[GameHudController] ReputationLabel not found in UXML.");
 
         foreach (var btn in _allNavButtons)
             if (btn == null) Debug.LogError("[GameHudController] Nav button returned null from Q<>(). " +
@@ -151,7 +176,6 @@ public class GameHudController : MonoBehaviour
     {
         if (_contentArea == null) return;
 
-        // Remove the UXML placeholder label — panel roots replace it.
         _contentArea.Clear();
 
         _overviewPanelRoot = MakePanelRoot();
@@ -161,27 +185,38 @@ public class GameHudController : MonoBehaviour
         _marketPanelRoot = MakePanelRoot();
         _worldPanelRoot = MakePanelRoot();
 
-        // Stub content for panels not yet implemented.
+        // Stubs for unimplemented panels.
         AddStubLabel(_overviewPanelRoot, "OVERVIEW");
         AddStubLabel(_employeesPanelRoot, "EMPLOYEES");
         AddStubLabel(_contractsPanelRoot, "CONTRACTS");
         AddStubLabel(_marketPanelRoot, "MARKET");
         AddStubLabel(_worldPanelRoot, "WORLD");
 
-        // Research panel — real content if managers are assigned.
+        // Research panel constructed here but NOT built yet.
+        // Build() is deferred to Start() so ResearchManager.Awake()
+        // has time to populate NodeSOLookup before we query it.
         if (_researchManager != null && _employeeManager != null)
         {
             _researchPanel = new ResearchPanel(
                 _researchPanelRoot, _researchManager, _employeeManager);
             _researchPanel.OnAssignResearcherRequested += HandleAssignResearcher;
             _researchPanel.OnCancelResearchRequested += HandleCancelResearch;
-            _researchPanel.Build();
         }
         else
         {
             AddStubLabel(_researchPanelRoot, "RESEARCH — assign managers in Inspector");
-            Debug.LogWarning("[GameHudController] ResearchManager or EmployeeManager not assigned. " +
-                             "ResearchPanel will not initialise.");
+            Debug.LogWarning("[GameHudController] ResearchManager or EmployeeManager not assigned.");
+        }
+
+        if (_contractManager != null && _employeeManager != null)
+        {
+            _contractPanel = new ContractPanel(
+                _contractsPanelRoot, _contractManager, _employeeManager);
+            _contractPanel.OnContractAcceptRequested += HandleContractAccept;
+        }
+        else
+        {
+            AddStubLabel(_contractsPanelRoot, "CONTRACTS — assign managers in Inspector");
         }
     }
 
@@ -217,6 +252,8 @@ public class GameHudController : MonoBehaviour
 
     private void ActivatePanel(string panelName, Button sourceButton)
     {
+        _activePanelName = panelName;
+
         // Nav button state.
         foreach (var btn in _allNavButtons)
         {
@@ -235,9 +272,9 @@ public class GameHudController : MonoBehaviour
         SetPanelDisplay(_marketPanelRoot, panelName == AegisConstants.PANEL_MARKET);
         SetPanelDisplay(_worldPanelRoot, panelName == AegisConstants.PANEL_WORLD);
 
-        // Refresh research content when it becomes visible.
-        if (panelName == AegisConstants.PANEL_RESEARCH)
-            _researchPanel?.Refresh();
+        // Refresh content when it becomes visible.
+        if (panelName == AegisConstants.PANEL_RESEARCH) _researchPanel?.Refresh();
+        if (panelName == AegisConstants.PANEL_CONTRACTS) _contractPanel?.Refresh();
 
         Debug.Log($"[GameHud] Panel active: {panelName}");
     }
@@ -330,5 +367,45 @@ public class GameHudController : MonoBehaviour
     {
         _researchManager?.CancelResearch(nodeId);
         _researchPanel?.Refresh();
+    }
+
+    private void HandleReputationChanged(float score)
+    {
+        // ReputationManager.CurrentTier is set before this event fires.
+        if (_reputationLabel != null && _reputationManager != null)
+            _reputationLabel.text = ReputationManager.GetTierName(_reputationManager.CurrentTier);
+    }
+
+    private void HandleContractResolved(Contract contract)
+    {
+        _contractPanel?.Refresh();
+    }
+
+    private void HandleOffersUpdated(IReadOnlyList<Contract> offers)
+    {
+        if (_activePanelName == AegisConstants.PANEL_CONTRACTS)
+            _contractPanel?.Refresh();
+    }
+
+    private void HandleActiveUpdated(IReadOnlyList<Contract> active)
+    {
+        if (_activePanelName == AegisConstants.PANEL_CONTRACTS)
+            _contractPanel?.Refresh();
+    }
+
+    private void HandleContractAccept(Contract contract)
+    {
+        if (_contractManager == null || _employeeManager == null) return;
+
+        // DD-14: collect all unassigned Engineers at acceptance time.
+        var engineers = new List<Employee>();
+        foreach (Employee emp in _employeeManager.Employees)
+        {
+            if (emp.Role == EmployeeRole.Engineer && string.IsNullOrEmpty(emp.Assignment))
+                engineers.Add(emp);
+        }
+
+        bool accepted = _contractManager.AcceptContract(contract, engineers);
+        if (accepted) _contractPanel?.Refresh();
     }
 }

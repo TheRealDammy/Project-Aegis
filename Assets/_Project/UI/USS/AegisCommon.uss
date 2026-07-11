@@ -194,10 +194,6 @@
     align-items: stretch;
 }
 
-.branch-column:last-child {
-    margin-right: 0;
-}
-
 .branch-header {
     color: #8A9BB5;
     font-size: 11px;
@@ -314,4 +310,121 @@
     background-color: #22304A;
     border-color: #E8EDF3;
     color: #E8EDF3;
+}
+
+/* ══════════════════════════════════════════════════════════
+   CONTRACT PANEL
+   Two sections: Available offers, Active contracts.
+   ══════════════════════════════════════════════════════════ */
+
+.contract-panel {
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 16px;
+    overflow: hidden;
+}
+
+.contract-section-header {
+    color: #8A9BB5;
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+    padding-bottom: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: #2E4060;
+    margin-bottom: 8px;
+    margin-top: 16px;
+}
+
+/* ——— Contract Card ——————————————————————————————————————— */
+
+.contract-card {
+    flex-direction: row;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 6px;
+    background-color: #1A2535;
+    border-width: 1px;
+    border-color: #2E4060;
+    border-left-width: 3px;
+    border-left-color: #2E4060;
+    border-radius: 0;
+}
+
+.contract-card--available {
+    border-left-color: #8A9BB5;
+}
+
+.contract-card--active {
+    border-left-color: #0A8A8A;
+}
+
+.contract-card--success {
+    border-left-color: #2DB87A;
+}
+
+.contract-card--failed {
+    border-left-color: #C0392B;
+}
+
+/* Card info column (flex-grow fills available width) */
+.contract-card-info {
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.contract-card-title {
+    color: #E8EDF3;
+    font-size: 12px;
+    -unity-font-style: bold;
+    margin-bottom: 4px;
+}
+
+.contract-card-detail {
+    color: #8A9BB5;
+    font-size: 11px;
+}
+
+.contract-card-risk {
+    color: #E8A020; /* Amber Alert — risk is a warning-category value */
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.contract-card-risk--low {
+    color: #2DB87A;
+}
+
+.contract-card-risk--high {
+    color: #C0392B;
+}
+
+/* Accept button — primary action, right-aligned */
+.contract-accept-btn {
+    flex-shrink: 0;
+    width: 100px;
+    height: 32px;
+    margin-left: 16px;
+    background-color: #0A8A8A;
+    border-width: 0;
+    border-radius: 0;
+    color: #E8EDF3;
+    font-size: 11px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    letter-spacing: 1px;
+}
+
+.contract-accept-btn:hover {
+    background-color: #0BAAAA;
+}
+
+.contract-accept-btn:disabled {
+    background-color: #2E4060;
+    color: #8A9BB5;
+}
+
+/* ——— Reputation label in top bar ———————————————————————— */
+.rep-label {
+    color: #0A8A8A; /* Signal Teal — reputation is positive-state colour */
 }

@@ -15,6 +15,7 @@ public class ResearchManager : MonoBehaviour
     // — Serialized Fields ——————————————————————————————————
     /// <summary>All 17 research node assets. Assign in Inspector.</summary>
     [SerializeField] private ResearchNodeSO[] _allNodes;
+    [SerializeField] private EmployeeManager _employeeManager;
 
     // — Public Properties ——————————————————————————————————
     public IReadOnlyDictionary<string, ResearchNodeState> NodeStates => _nodeStates;
@@ -32,6 +33,8 @@ public class ResearchManager : MonoBehaviour
     /// ResearchManager remains the single owner of SO references.
     /// </summary>
     public IReadOnlyDictionary<string, ResearchNodeSO> NodeSOLookup => _nodeById;
+
+    
 
     // — Unity Lifecycle ————————————————————————————————————
     private void Awake()
@@ -109,23 +112,24 @@ public class ResearchManager : MonoBehaviour
     }
 
     /// <summary>Cancels research on a node, returning it to Available state.</summary>
+
     public bool CancelResearch(string nodeId)
     {
-        if (!_nodeStates.TryGetValue(nodeId, out var state) || state != ResearchNodeState.InProgress)
+        if (!_nodeStates.TryGetValue(nodeId, out ResearchNodeState state)
+            || state != ResearchNodeState.InProgress)
         {
-            Debug.LogWarning($"[ResearchManager] CancelResearch: node '{nodeId}' is not InProgress.");
+            Debug.LogWarning($"[ResearchManager] CancelResearch: '{nodeId}' is not InProgress.");
             return false;
         }
 
-        if (_activeProjects.TryGetValue(nodeId, out var project))
+        if (_activeProjects.TryGetValue(nodeId, out ActiveResearchProject project))
         {
-            // Find and unassign the researcher by name.
-            // Upgrade to stable ID lookup when save/load is implemented.
+            UnassignResearcher(project.AssignedResearcherName);
             _activeProjects.Remove(nodeId);
         }
 
         SetNodeState(nodeId, ResearchNodeState.Available);
-        Debug.Log($"[ResearchManager] Research cancelled on '{nodeId}'.");
+        Debug.Log($"[ResearchManager] Research cancelled: '{nodeId}'.");
         return true;
     }
 
@@ -172,7 +176,6 @@ public class ResearchManager : MonoBehaviour
 
     private void AdvanceInProgressNodes()
     {
-        // Collect completions separately — don't modify the dict during iteration.
         var completed = new List<string>();
 
         foreach (var kvp in _activeProjects)
@@ -180,12 +183,9 @@ public class ResearchManager : MonoBehaviour
             string nodeId = kvp.Key;
             ActiveResearchProject project = kvp.Value;
 
-            if (!_nodeById.TryGetValue(nodeId, out var so)) continue;
+            if (!_nodeById.TryGetValue(nodeId, out ResearchNodeSO so)) continue;
 
-            // Progress = researcher's ResearchSpeed stat (trait-modified).
-            // Without a live Employee reference, we use the base value stored at assignment.
-            // M3: replace with live Employee reference for real-time trait sensitivity.
-            project.Progress += AegisConstants.RESEARCH_PROGRESS_PER_TICK;
+            project.Progress += GetResearcherProgressThisTick(project.AssignedResearcherName);
 
             if (project.Progress >= so.BaseResearchCost)
                 completed.Add(nodeId);
@@ -195,16 +195,51 @@ public class ResearchManager : MonoBehaviour
             CompleteNode(nodeId);
     }
 
+    /// <summary>
+    /// Returns progress units for one tick based on the assigned researcher's stats.
+    /// Falls back to RESEARCH_PROGRESS_PER_TICK if the researcher can't be found.
+    /// A researcher with ResearchSpeed = RESEARCH_SPEED_BASELINE progresses at 1.0× per tick.
+    /// </summary>
+    private float GetResearcherProgressThisTick(string researcherName)
+    {
+        if (_employeeManager == null || string.IsNullOrEmpty(researcherName))
+            return AegisConstants.RESEARCH_PROGRESS_PER_TICK;
+
+        Employee researcher = _employeeManager.GetEmployeeByName(researcherName);
+        if (researcher == null)
+        {
+            Debug.LogWarning($"[ResearchManager] Researcher '{researcherName}' not found on roster. " +
+                             "Using baseline progress. Were they fired mid-project?");
+            return AegisConstants.RESEARCH_PROGRESS_PER_TICK;
+        }
+
+        float speed = researcher.GetModifiedStat(AegisConstants.STAT_RESEARCH_SPEED);
+        return speed / AegisConstants.RESEARCH_SPEED_BASELINE;
+    }
+
     private void CompleteNode(string nodeId)
     {
+        // Unassign the researcher before removing the project record.
+        if (_activeProjects.TryGetValue(nodeId, out ActiveResearchProject project))
+            UnassignResearcher(project.AssignedResearcherName);
+
         _activeProjects.Remove(nodeId);
         SetNodeState(nodeId, ResearchNodeState.Complete);
 
-        if (_nodeById.TryGetValue(nodeId, out var so))
+        if (_nodeById.TryGetValue(nodeId, out ResearchNodeSO so))
         {
             OnResearchCompleted?.Invoke(so);
             Debug.Log($"[ResearchManager] Research complete: '{so.DisplayName}'.");
         }
+    }
+
+    private void UnassignResearcher(string researcherName)
+    {
+        if (_employeeManager == null || string.IsNullOrEmpty(researcherName)) return;
+
+        Employee researcher = _employeeManager.GetEmployeeByName(researcherName);
+        if (researcher != null)
+            researcher.Assignment = null;
     }
 
     private void UnlockEligibleNodes()

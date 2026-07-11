@@ -19,4 +19,17 @@ public class Contract
     public float BudgetAllocated;         // Player-set over-spend above BaseCostGBP.
     public bool IsActive;
     public List<string> AssignedEmployeeNames = new List<string>();
+
+    /// <summary>
+    /// Success chance calculated once at acceptance per DD-12.
+    /// Never recalculated after this point — stores the team composition
+    /// and budget allocation at the moment the player committed.
+    /// </summary>
+    public float LockedSuccessChance;
+
+    /// <summary>
+    /// Number of engineers on the team at acceptance.
+    /// Stored for display purposes — matches AssignedEmployeeNames.Count at lock time.
+    /// </summary>
+    public int LockedEngineerCount;
 }

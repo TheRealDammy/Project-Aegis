@@ -4,8 +4,9 @@
         <ui:VisualElement name="TopBar" class="top-bar">
             <ui:Label name="CompanyNameLabel" text="AEGIS SYSTEMS" class="company-name" />
             <ui:VisualElement name="TopBarStats" class="top-bar-stats">
-                <ui:Label name="CashLabel" text="£0" class="stat-value" />
-                <ui:Label name="WeekLabel" text="WEEK 1" class="stat-value" />
+                <ui:Label name="CashLabel" class="stat-value" text="£0" />
+                <ui:Label name="ReputationLabel" class="stat-value rep-label" text="STARTUP" />
+                <ui:Label name="WeekLabel" class="stat-value" text="WEEK 1" />
             </ui:VisualElement>
             <ui:VisualElement name="SpeedControls" class="speed-controls">
                 <ui:Button name="PauseButton" text="⏸" class="speed-btn" />

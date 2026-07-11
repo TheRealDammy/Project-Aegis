@@ -21,6 +21,7 @@ public class EmployeeManager : MonoBehaviour
     /// from Assets/_Project/Data/Employees/. Empty = no traits generated (valid for Phase 1 testing).
     /// </summary>
     [SerializeField] private TraitSO[] _availableTraits;
+    [SerializeField] private bool _autoHireForTesting = false;
 
     // — Public Properties ——————————————————————————————————
     public IReadOnlyList<HiringCandidate> HiringPool => _hiringPool;
@@ -53,36 +54,71 @@ public class EmployeeManager : MonoBehaviour
     private void OnEnable()
     {
         TimeManager.OnWeekTick += HandleWeekTick;
+        ReputationManager.OnTierChanged += HandleTierChanged; // QA-004
     }
 
     private void OnDisable()
     {
         TimeManager.OnWeekTick -= HandleWeekTick;
+        ReputationManager.OnTierChanged -= HandleTierChanged;
     }
 
     private void Start()
     {
         FillPool();
-        Debug.Log($"[EmployeeManager] Hiring pool initialised with {_hiringPool.Count} candidates.");
+        Debug.Log($"[EmployeeManager] Pool initialised: {_hiringPool.Count} candidates.");
 
-        // TEMP — auto-hire first Researcher candidate for M2 testing.
-        // Remove this block when EMP panel hiring UI is implemented.
-        HireFirstResearcherForTesting();
+        if (_autoHireForTesting)
+            AutoHireForTesting();
     }
 
-    private void HireFirstResearcherForTesting()
+    /// <summary>
+    /// DEV ONLY — auto-hires one Researcher and one Engineer for testing without
+    /// the EMP panel. Enable via Inspector checkbox. Remove when EMP panel is built.
+    /// </summary>
+    private void AutoHireForTesting()
     {
-        foreach (var candidate in _hiringPool)
+        bool hiredResearcher = false;
+        bool hiredEngineer = false;
+
+        // Iterate a copy — HireCandidate modifies the pool.
+        var snapshot = new System.Collections.Generic.List<HiringCandidate>(_hiringPool);
+        foreach (HiringCandidate candidate in snapshot)
         {
-            if (candidate.Role == EmployeeRole.Researcher)
+            if (!hiredResearcher && candidate.Role == EmployeeRole.Researcher)
             {
                 HireCandidate(candidate);
-                Debug.Log($"[DEV] Auto-hired researcher '{candidate.Name}' for testing. " +
-                          "Remove HireFirstResearcherForTesting() when EMP panel exists.");
-                return;
+                hiredResearcher = true;
+                Debug.Log($"[DEV] Auto-hired Researcher: {candidate.Name}");
             }
+            else if (!hiredEngineer && candidate.Role == EmployeeRole.Engineer)
+            {
+                HireCandidate(candidate);
+                hiredEngineer = true;
+                Debug.Log($"[DEV] Auto-hired Engineer: {candidate.Name}");
+            }
+
+            if (hiredResearcher && hiredEngineer) break;
         }
-        Debug.LogWarning("[DEV] No Researcher in initial pool — re-enter Play mode to try again.");
+
+        if (!hiredResearcher)
+            Debug.LogWarning("[DEV] No Researcher in initial pool — re-enter Play mode to retry.");
+        if (!hiredEngineer)
+            Debug.LogWarning("[DEV] No Engineer in initial pool — re-enter Play mode to retry.");
+    }
+
+    private void HandleTierChanged(int newTier)
+    {
+        // QA-004 closed. Phase now driven by reputation tier.
+        // Tier 1 = Phase 1, Tier 2–3 = Phase 2, Tier 4–5 = Phase 3.
+        _currentPhase = newTier switch
+        {
+            1 => 1,
+            2 or 3 => 2,
+            4 or 5 => 3,
+            _ => 1
+        };
+        Debug.Log($"[EmployeeManager] Phase updated to {_currentPhase} (Reputation Tier {newTier}).");
     }
 
     // — Public Methods —————————————————————————————————————
@@ -125,6 +161,21 @@ public class EmployeeManager : MonoBehaviour
         OnEmployeeFired?.Invoke(employee);
         Debug.Log($"[EmployeeManager] Fired: {employee.Name}.");
         return true;
+    }
+
+    /// <summary>
+    /// Finds an active roster employee by exact name match.
+    /// Returns null if not found. Name-based lookup is a temporary M3 solution —
+    /// replace with stable employee ID at save/load implementation (M4).
+    /// </summary>
+    public Employee GetEmployeeByName(string name)
+    {
+        foreach (Employee emp in _employees)
+        {
+            if (emp.Name == name)
+                return emp;
+        }
+        return null;
     }
 
     // — Private Methods ————————————————————————————————————

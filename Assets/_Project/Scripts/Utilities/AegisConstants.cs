@@ -114,4 +114,30 @@ public static class AegisConstants
     // ResearchSpeed stat when live employee assignment is wired in M3.
     // At 1.0, a node costing 4 weeks takes 4 ticks at 1x speed = 8 real seconds.
     public const float RESEARCH_PROGRESS_PER_TICK = 1.0f;
+
+    // — Reputation System —————————————————————————————————————
+    public const float STARTING_REPUTATION = 10f;
+    // Tier thresholds — score must reach these to advance.
+    public const float REPUTATION_TIER_2_THRESHOLD = 20f;
+    public const float REPUTATION_TIER_3_THRESHOLD = 40f;
+    public const float REPUTATION_TIER_4_THRESHOLD = 60f;
+    public const float REPUTATION_TIER_5_THRESHOLD = 80f;
+    // Score deltas — multiplied by contract tier (1–5).
+    // e.g. Tier 2 success = 2 × 5 = +10 points. Tier 2 failure = 2 × 8 = −16 points.
+    // Flagged for System Designer balance review — see QA-005 equivalent for reputation.
+    public const float REPUTATION_SUCCESS_PER_TIER = 5f;
+    public const float REPUTATION_FAILURE_PER_TIER = 8f;
+
+    // — Research Live Stats ———————————————————————————————————
+    // ResearchSpeed stat value that equals 1.0× baseline progress per tick.
+    // A researcher with speed 25 advances at 0.5×; speed 100 advances at 2.0×.
+    public const float RESEARCH_SPEED_BASELINE = 50f;
+
+    // — Contract Delivery —————————————————————————————————————
+    // Financial penalty applied to cash on contract failure (multiplied by base reward).
+    // 0.0 = no penalty. 0.2 = 20% of reward deducted as loss. SD to confirm.
+    public const float CONTRACT_FAILURE_PENALTY_RATIO = 0.2f;
+
+    // — HUD Element Names (additions) ————————————————————————
+    public const string HUD_REPUTATION_LABEL = "ReputationLabel";
 }
