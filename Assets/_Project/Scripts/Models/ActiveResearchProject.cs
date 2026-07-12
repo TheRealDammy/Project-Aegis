@@ -12,10 +12,10 @@ public class ActiveResearchProject
     public string NodeId;
 
     /// <summary>
-    /// Assigned researcher's name — matched back to Employee.Name on load.
-    /// Upgrade to a stable employee ID when save/load (M4) is implemented.
+    /// Assigned researcher's EmployeeId. Looked up via EmployeeManager.GetEmployeeById().
+    /// Stable across sessions — survives save/load correctly.
     /// </summary>
-    public string AssignedResearcherName;
+    public string AssignedResearcherId;
 
     /// <summary>Researcher-weeks invested so far. Compared to BaseResearchCost.</summary>
     public float Progress;

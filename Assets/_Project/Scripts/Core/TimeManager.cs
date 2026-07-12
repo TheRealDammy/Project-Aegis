@@ -53,6 +53,24 @@ public class TimeManager : MonoBehaviour
         Debug.Log($"[TimeManager] Speed set to {speed}x.");
     }
 
+    /// <summary>Writes simulation time state to the save data container.</summary>
+    public void PopulateSaveData(GameSaveData data)
+    {
+        data.CurrentWeek = CurrentWeek;
+    }
+
+    /// <summary>
+    /// Restores simulation time state. Pauses simulation during load
+    /// to prevent ticks firing while state is being restored.
+    /// </summary>
+    public void LoadFromSaveData(GameSaveData data)
+    {
+        SetSpeed(0f);          // Pause while loading. Player resumes manually.
+        CurrentWeek = data.CurrentWeek;
+        OnWeekChanged?.Invoke(CurrentWeek);
+        Debug.Log($"[TimeManager] Loaded week {CurrentWeek}.");
+    }
+
     // — Private Methods ————————————————————————————————————
 
     private IEnumerator TickCoroutine()

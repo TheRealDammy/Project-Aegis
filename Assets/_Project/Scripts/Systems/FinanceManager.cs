@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using UnityEngine;
 
 /// <summary>
@@ -7,22 +7,22 @@ using UnityEngine;
 /// </summary>
 public class FinanceManager : MonoBehaviour
 {
-    // — Static Events ——————————————————————————————————————
+    // â€” Static Events â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     /// <summary>Fires whenever cash balance changes, with the new balance.</summary>
     public static event Action<float> OnCashChanged;
 
-    // — Public Properties ——————————————————————————————————
+    // â€” Public Properties â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     public float CashBalance { get; private set; }
 
-    // — Serialized Fields ——————————————————————————————————
+    // â€” Serialized Fields â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     [SerializeField] private EmployeeManager _employeeManager;
 
-    // — Unity Lifecycle ————————————————————————————————————
+    // â€” Unity Lifecycle â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private void Start()
     {
         CashBalance = AegisConstants.STARTING_CASH;
         OnCashChanged?.Invoke(CashBalance);
-        Debug.Log($"[FinanceManager] Starting cash: £{CashBalance:N0}");
+        Debug.Log($"[FinanceManager] Starting cash: Â£{CashBalance:N0}");
     }
 
     private void OnEnable()
@@ -39,7 +39,7 @@ public class FinanceManager : MonoBehaviour
         ContractManager.OnContractFailed -= HandleContractFailed;
     }
 
-    // — Public Methods —————————————————————————————————————
+    // â€” Public Methods â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
 
     /// <summary>Credits cash. Use for contract rewards (M3+).</summary>
     public void AddRevenue(float amount)
@@ -58,11 +58,23 @@ public class FinanceManager : MonoBehaviour
     public void DeductCost(float amount)
     {
         CashBalance -= amount;
-        // Cash can go negative — bankruptcy detection is M4 game logic.
+        // Cash can go negative â€” bankruptcy detection is M4 game logic.
         OnCashChanged?.Invoke(CashBalance);
     }
 
-    // — Private Methods ————————————————————————————————————
+    public void PopulateSaveData(GameSaveData data)
+    {
+        data.CashBalance = CashBalance;
+    }
+
+    public void LoadFromSaveData(GameSaveData data)
+    {
+        CashBalance = data.CashBalance;
+        OnCashChanged?.Invoke(CashBalance);
+        Debug.Log($"[FinanceManager] Loaded cash: Â£{CashBalance:N0}.");
+    }
+
+    // â€” Private Methods â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private void HandleWeekTick()
     {
         DeductWeeklySalaries();
@@ -79,14 +91,14 @@ public class FinanceManager : MonoBehaviour
         if (totalSalaries <= 0f) return;
 
         DeductCost(totalSalaries);
-        Debug.Log($"[FinanceManager] Weekly salaries deducted: £{totalSalaries:N0}. " +
-                  $"Balance: £{CashBalance:N0}");
+        Debug.Log($"[FinanceManager] Weekly salaries deducted: Â£{totalSalaries:N0}. " +
+                  $"Balance: Â£{CashBalance:N0}");
     }
 
     private void HandleContractCompleted(Contract contract)
     {
         AddRevenue(contract.BaseRewardGBP);
-        Debug.Log($"[FinanceManager] Revenue received: £{contract.BaseRewardGBP:N0}.");
+        Debug.Log($"[FinanceManager] Revenue received: Â£{contract.BaseRewardGBP:N0}.");
     }
 
     private void HandleContractFailed(Contract contract)

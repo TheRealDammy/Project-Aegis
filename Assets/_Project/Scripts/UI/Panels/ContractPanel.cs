@@ -31,6 +31,13 @@ public class ContractPanel
         _employeeManager = employeeManager;
     }
 
+    // — Private: State for engineer selection modal —————————————
+    private Contract _pendingContract;
+    private VisualElement _engineerSelectionView;
+    private VisualElement _mainView;
+    private readonly System.Collections.Generic.HashSet<string> _selectedEngineerIds
+        = new System.Collections.Generic.HashSet<string>();
+
     // — Public ——————————————————————————————————————————————
 
     public void Build()
@@ -111,10 +118,10 @@ public class ContractPanel
 
         var acceptBtn = new Button();
         acceptBtn.AddToClassList("contract-accept-btn");
-        acceptBtn.text = "ACCEPT";
+        acceptBtn.text = "ASSIGN & ACCEPT";
 
-        Contract captured = contract; // Closure capture.
-        acceptBtn.clicked += () => OnContractAcceptRequested?.Invoke(captured);
+        Contract captured = contract;
+        acceptBtn.clicked += () => ShowEngineerSelection(captured);
         card.Add(acceptBtn);
 
         return card;
@@ -167,6 +174,120 @@ public class ContractPanel
         card.Add(info);
         return card;
     }
+
+    private void ShowEngineerSelection(Contract contract)
+    {
+        _pendingContract = contract;
+        _selectedEngineerIds.Clear();
+
+        _container.Clear();
+
+        var view = new VisualElement();
+        view.AddToClassList("contract-panel");
+
+        var title = new Label($"Assign Engineers — {contract.ContractCategory}");
+        title.AddToClassList("contract-section-header");
+        view.Add(title);
+
+        var detail = new Label(
+            $"Reward: £{contract.BaseRewardGBP:N0}   Deadline: {contract.DeadlineWeeks} weeks");
+        detail.AddToClassList("contract-card-detail");
+        view.Add(detail);
+
+        var engineerSection = new Label("SELECT ENGINEERS");
+        engineerSection.AddToClassList("contract-section-header");
+        view.Add(engineerSection);
+
+        var availableEngineers = GetAvailableEngineers();
+
+        if (availableEngineers.Count == 0)
+        {
+            var none = new Label("No unassigned Engineers on roster. Hire via EMP panel.");
+            none.AddToClassList("contract-card-detail");
+            view.Add(none);
+        }
+        else
+        {
+            foreach (Employee eng in availableEngineers)
+                view.Add(BuildEngineerSelectRow(eng));
+        }
+
+        var buttonRow = new VisualElement();
+        buttonRow.style.flexDirection = FlexDirection.Row;
+        buttonRow.style.marginTop = 16f;
+
+        var confirmBtn = new Button();
+        confirmBtn.AddToClassList("contract-accept-btn");
+        confirmBtn.text = "CONFIRM";
+        confirmBtn.clicked += ConfirmAccept;
+        buttonRow.Add(confirmBtn);
+
+        var cancelBtn = new Button();
+        cancelBtn.AddToClassList("contract-accept-btn");
+        cancelBtn.style.backgroundColor = new StyleColor(new Color(0.18f, 0.25f, 0.37f));
+        cancelBtn.style.marginLeft = 8f;
+        cancelBtn.text = "CANCEL";
+        cancelBtn.clicked += () => { _pendingContract = null; Build(); };
+        buttonRow.Add(cancelBtn);
+
+        view.Add(buttonRow);
+        _container.Add(view);
+    }
+
+    private VisualElement BuildEngineerSelectRow(Employee eng)
+    {
+        var row = new VisualElement();
+        row.style.flexDirection = FlexDirection.Row;
+        row.style.alignItems = Align.Center;
+        row.style.paddingTop = 6f;
+        row.style.paddingBottom = 6f;
+        row.style.borderBottomWidth = 1f;
+        row.style.borderBottomColor = new StyleColor(new Color(0.18f, 0.25f, 0.37f));
+
+        var nameLabel = new Label($"{eng.Name} — Eff: {eng.GetModifiedStat(AegisConstants.STAT_EFFICIENCY):F0}");
+        nameLabel.AddToClassList("emp-card-name");
+        nameLabel.style.flexGrow = 1f;
+        row.Add(nameLabel);
+
+        var toggle = new Toggle();
+        toggle.value = false;
+
+        string capturedId = eng.EmployeeId;
+        toggle.RegisterValueChangedCallback(evt =>
+        {
+            if (evt.newValue) _selectedEngineerIds.Add(capturedId);
+            else _selectedEngineerIds.Remove(capturedId);
+        });
+
+        row.Add(toggle);
+        return row;
+    }
+
+    private void ConfirmAccept()
+    {
+        if (_pendingContract == null) return;
+
+        var selectedEngineers = new System.Collections.Generic.List<Employee>();
+        foreach (Employee emp in _employeeManager.Employees)
+            if (_selectedEngineerIds.Contains(emp.EmployeeId))
+                selectedEngineers.Add(emp);
+
+        if (selectedEngineers.Count == 0)
+        {
+            Debug.Log("[ContractPanel] No engineers selected. Select at least one.");
+            return;
+        }
+
+        OnContractAcceptRequested?.Invoke(_pendingContract);
+        // Note: GameHudController now passes selectedEngineers instead of auto-gathering them.
+        // Store selected engineers for GameHudController to pick up.
+        _lastSelectedEngineers = selectedEngineers;
+        _pendingContract = null;
+        Build();
+    }
+
+    // GameHudController reads this after OnContractAcceptRequested fires.
+    public System.Collections.Generic.List<Employee> _lastSelectedEngineers;
 
     // — Private: Helpers ——————————————————————————————————
 

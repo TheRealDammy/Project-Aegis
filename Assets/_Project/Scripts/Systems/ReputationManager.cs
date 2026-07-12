@@ -56,6 +56,24 @@ public class ReputationManager : MonoBehaviour
         _ => "UNKNOWN"
     };
 
+    public void PopulateSaveData(GameSaveData data)
+    {
+        data.ReputationScore = ReputationScore;
+    }
+
+    public void LoadFromSaveData(GameSaveData data)
+    {
+        // Apply via the internal method so tier recalculates and events fire correctly.
+        // This triggers OnTierChanged → ContractManager and EmployeeManager update.
+        // Load ContractManager and EmployeeManager BEFORE calling this method.
+        ReputationScore = Mathf.Clamp(data.ReputationScore, 0f, 100f);
+        CurrentTier = CalculateTier(ReputationScore);
+        OnReputationChanged?.Invoke(ReputationScore);
+        OnTierChanged?.Invoke(CurrentTier);
+        Debug.Log($"[ReputationManager] Loaded score: {ReputationScore:F1} " +
+                  $"(Tier {CurrentTier} — {GetTierName(CurrentTier)}).");
+    }
+
     // — Private Methods ————————————————————————————————————
 
     private void HandleContractSuccess(Contract contract)

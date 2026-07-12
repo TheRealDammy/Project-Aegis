@@ -18,7 +18,11 @@ public class Contract
     public int WeeksRemaining;
     public float BudgetAllocated;         // Player-set over-spend above BaseCostGBP.
     public bool IsActive;
-    public List<string> AssignedEmployeeNames = new List<string>();
+
+    /// <summary>
+    /// EmployeeIds of engineers assigned at acceptance. Looked up via GetEmployeeById().
+    /// </summary>
+    public List<string> AssignedEmployeeIds = new List<string>();   // Was: AssignedEmployeeNames
 
     /// <summary>
     /// Success chance calculated once at acceptance per DD-12.

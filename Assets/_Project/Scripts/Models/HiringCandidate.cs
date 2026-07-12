@@ -8,6 +8,8 @@ using System.Collections.Generic;
 [Serializable]
 public class HiringCandidate
 {
+    /// <summary>Stable ID assigned at generation. Carried into Employee on hire.</summary>
+    public string EmployeeId;
     public string Name;
     public EmployeeRole Role;
     public Dictionary<string, float> Stats = new Dictionary<string, float>();
@@ -23,13 +25,14 @@ public class HiringCandidate
     {
         return new Employee
         {
+            EmployeeId = EmployeeId,         // ID carries across — not regenerated on hire.
             Name = Name,
             Role = Role,
             Stats = new Dictionary<string, float>(Stats),
             Traits = new List<TraitSO>(Traits),
             WeeklySalary = WeeklySalary,
             Assignment = null,
-            Happiness = 75f  // New hires start with reasonable happiness; traits adjust from here.
+            Happiness = 75f
         };
     }
 }

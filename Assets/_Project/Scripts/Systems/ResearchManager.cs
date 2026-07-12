@@ -102,12 +102,13 @@ public class ResearchManager : MonoBehaviour
         _activeProjects[nodeId] = new ActiveResearchProject
         {
             NodeId = nodeId,
-            AssignedResearcherName = researcher.Name,
+            AssignedResearcherId = researcher.EmployeeId,   // Was: AssignedResearcherName
             Progress = 0f
         };
 
         SetNodeState(nodeId, ResearchNodeState.InProgress);
-        Debug.Log($"[ResearchManager] {researcher.Name} assigned to '{nodeId}'.");
+        Debug.Log($"[ResearchManager] {researcher.Name} ({researcher.EmployeeId}) " +
+                  $"assigned to '{nodeId}'.");
         return true;
     }
 
@@ -124,7 +125,7 @@ public class ResearchManager : MonoBehaviour
 
         if (_activeProjects.TryGetValue(nodeId, out ActiveResearchProject project))
         {
-            UnassignResearcher(project.AssignedResearcherName);
+            UnassignResearcher(project.AssignedResearcherId);
             _activeProjects.Remove(nodeId);
         }
 
@@ -147,6 +148,70 @@ public class ResearchManager : MonoBehaviour
     public bool IsNodeComplete(string nodeId)
     {
         return _nodeStates.TryGetValue(nodeId, out var state) && state == ResearchNodeState.Complete;
+    }
+
+    public void PopulateSaveData(GameSaveData data)
+    {
+        data.CompletedResearchNodeIds = new List<string>();
+        data.ActiveResearch = new List<ActiveResearchSaveData>();
+
+        foreach (var kvp in _nodeStates)
+        {
+            if (kvp.Value == ResearchNodeState.Complete)
+                data.CompletedResearchNodeIds.Add(kvp.Key);
+        }
+
+        foreach (var kvp in _activeProjects)
+        {
+            data.ActiveResearch.Add(new ActiveResearchSaveData
+            {
+                NodeId = kvp.Value.NodeId,
+                AssignedResearcherId = kvp.Value.AssignedResearcherId,
+                Progress = kvp.Value.Progress
+            });
+        }
+    }
+
+    public void LoadFromSaveData(GameSaveData data)
+    {
+        // Step 1: Reset all nodes to Locked.
+        _nodeStates.Clear();
+        _activeProjects.Clear();
+        foreach (string nodeId in _nodeById.Keys)
+            _nodeStates[nodeId] = ResearchNodeState.Locked;
+
+        // Step 2: Mark complete nodes.
+        if (data.CompletedResearchNodeIds != null)
+            foreach (string nodeId in data.CompletedResearchNodeIds)
+                if (_nodeStates.ContainsKey(nodeId))
+                    _nodeStates[nodeId] = ResearchNodeState.Complete;
+
+        // Step 3: Restore active projects (InProgress state).
+        if (data.ActiveResearch != null)
+        {
+            foreach (ActiveResearchSaveData d in data.ActiveResearch)
+            {
+                if (!_nodeStates.ContainsKey(d.NodeId)) continue;
+                _nodeStates[d.NodeId] = ResearchNodeState.InProgress;
+                _activeProjects[d.NodeId] = new ActiveResearchProject
+                {
+                    NodeId = d.NodeId,
+                    AssignedResearcherId = d.AssignedResearcherId,
+                    Progress = d.Progress
+                };
+            }
+        }
+
+        // Step 4: Unlock Available nodes based on completed prerequisites.
+        // This correctly sets nodes whose prerequisites are now met.
+        UnlockEligibleNodes();
+
+        // Step 5: Fire state change events so UI panels refresh.
+        foreach (var kvp in _nodeStates)
+            OnNodeStateChanged?.Invoke(kvp.Key, kvp.Value);
+
+        Debug.Log($"[ResearchManager] Loaded. Complete: {data.CompletedResearchNodeIds?.Count ?? 0}, " +
+                  $"In Progress: {_activeProjects.Count}.");
     }
 
     // — Private Methods ————————————————————————————————————
@@ -185,7 +250,7 @@ public class ResearchManager : MonoBehaviour
 
             if (!_nodeById.TryGetValue(nodeId, out ResearchNodeSO so)) continue;
 
-            project.Progress += GetResearcherProgressThisTick(project.AssignedResearcherName);
+            project.Progress += GetResearcherProgressThisTick(project.AssignedResearcherId);
 
             if (project.Progress >= so.BaseResearchCost)
                 completed.Add(nodeId);
@@ -200,16 +265,15 @@ public class ResearchManager : MonoBehaviour
     /// Falls back to RESEARCH_PROGRESS_PER_TICK if the researcher can't be found.
     /// A researcher with ResearchSpeed = RESEARCH_SPEED_BASELINE progresses at 1.0× per tick.
     /// </summary>
-    private float GetResearcherProgressThisTick(string researcherName)
+    private float GetResearcherProgressThisTick(string researcherId)   // param type unchanged, name clarified
     {
-        if (_employeeManager == null || string.IsNullOrEmpty(researcherName))
+        if (_employeeManager == null || string.IsNullOrEmpty(researcherId))
             return AegisConstants.RESEARCH_PROGRESS_PER_TICK;
 
-        Employee researcher = _employeeManager.GetEmployeeByName(researcherName);
+        Employee researcher = _employeeManager.GetEmployeeById(researcherId);   // Was: GetEmployeeByName
         if (researcher == null)
         {
-            Debug.LogWarning($"[ResearchManager] Researcher '{researcherName}' not found on roster. " +
-                             "Using baseline progress. Were they fired mid-project?");
+            Debug.LogWarning($"[ResearchManager] Researcher ID '{researcherId}' not found on roster.");
             return AegisConstants.RESEARCH_PROGRESS_PER_TICK;
         }
 
@@ -221,7 +285,7 @@ public class ResearchManager : MonoBehaviour
     {
         // Unassign the researcher before removing the project record.
         if (_activeProjects.TryGetValue(nodeId, out ActiveResearchProject project))
-            UnassignResearcher(project.AssignedResearcherName);
+            UnassignResearcher(project.AssignedResearcherId);
 
         _activeProjects.Remove(nodeId);
         SetNodeState(nodeId, ResearchNodeState.Complete);
@@ -233,11 +297,10 @@ public class ResearchManager : MonoBehaviour
         }
     }
 
-    private void UnassignResearcher(string researcherName)
+    private void UnassignResearcher(string researcherId)
     {
-        if (_employeeManager == null || string.IsNullOrEmpty(researcherName)) return;
-
-        Employee researcher = _employeeManager.GetEmployeeByName(researcherName);
+        if (_employeeManager == null || string.IsNullOrEmpty(researcherId)) return;
+        Employee researcher = _employeeManager.GetEmployeeById(researcherId);   // Was: GetEmployeeByName
         if (researcher != null)
             researcher.Assignment = null;
     }

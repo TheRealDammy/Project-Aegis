@@ -90,7 +90,7 @@ public class ContractManager : MonoBehaviour
         foreach (Employee eng in assignedEngineers)
         {
             eng.Assignment = contract.ContractId;
-            contract.AssignedEmployeeNames.Add(eng.Name);
+            contract.AssignedEmployeeIds.Add(eng.EmployeeId);   // Was: AssignedEmployeeNames, eng.Name
         }
 
         _availableContracts.Remove(contract);
@@ -126,6 +126,39 @@ public class ContractManager : MonoBehaviour
 
         float raw = AegisConstants.BASE_CONTRACT_CHANCE + teamBonus + budgetBonus - complexityPenalty;
         return Mathf.Clamp(raw, AegisConstants.MIN_CONTRACT_CHANCE, AegisConstants.MAX_CONTRACT_CHANCE);
+    }
+
+    public void PopulateSaveData(GameSaveData data)
+    {
+        data.ContractIdCounter = _contractIdCounter;
+        data.AvailableContracts = ContractsToSaveData(_availableContracts);
+        data.ActiveContracts = ContractsToSaveData(_activeContracts);
+    }
+
+    public void LoadFromSaveData(GameSaveData data)
+    {
+        _contractIdCounter = data.ContractIdCounter;
+        _availableContracts.Clear();
+        _activeContracts.Clear();
+
+        if (data.AvailableContracts != null)
+            foreach (ContractSaveData d in data.AvailableContracts)
+                _availableContracts.Add(SaveDataToContract(d));
+
+        if (data.ActiveContracts != null)
+            foreach (ContractSaveData d in data.ActiveContracts)
+                _activeContracts.Add(SaveDataToContract(d));
+
+        // Re-seed completed research from ResearchManager's restored state.
+        // ResearchManager must be loaded before ContractManager.
+        _completedNodeIds.Clear();
+        SeedCompletedResearch();
+
+        OnOffersUpdated?.Invoke(_availableContracts);
+        OnActiveContractsUpdated?.Invoke(_activeContracts);
+
+        Debug.Log($"[ContractManager] Loaded. Available: {_availableContracts.Count}, " +
+                  $"Active: {_activeContracts.Count}. ID counter: {_contractIdCounter}.");
     }
 
     // — Private: Tick —————————————————————————————————————
@@ -183,9 +216,9 @@ public class ContractManager : MonoBehaviour
     {
         if (_employeeManager == null) return;
 
-        foreach (string name in contract.AssignedEmployeeNames)
+        foreach (string id in contract.AssignedEmployeeIds)   // Was: AssignedEmployeeNames
         {
-            Employee emp = _employeeManager.GetEmployeeByName(name);
+            Employee emp = _employeeManager.GetEmployeeById(id);   // Was: GetEmployeeByName
             if (emp != null)
                 emp.Assignment = null;
         }
@@ -296,5 +329,51 @@ public class ContractManager : MonoBehaviour
         if (baseCost <= 0f) return 0f;
         return Mathf.Clamp((allocated / baseCost - 1f) * AegisConstants.MAX_BUDGET_BONUS,
                             0f, AegisConstants.MAX_BUDGET_BONUS);
+    }
+
+    // — Private: Save Data Conversion ——————————————————————
+    private static List<ContractSaveData> ContractsToSaveData(List<Contract> contracts)
+    {
+        var list = new List<ContractSaveData>();
+        foreach (Contract c in contracts)
+        {
+            list.Add(new ContractSaveData
+            {
+                ContractId = c.ContractId,
+                ClientRegion = c.ClientRegion,
+                ContractCategory = c.ContractCategory,
+                ReputationTierRequired = c.ReputationTierRequired,
+                BaseRewardGBP = c.BaseRewardGBP,
+                BaseCostGBP = c.BaseCostGBP,
+                DeadlineWeeks = c.DeadlineWeeks,
+                WeeksRemaining = c.WeeksRemaining,
+                BudgetAllocated = c.BudgetAllocated,
+                IsActive = c.IsActive,
+                AssignedEmployeeIds = new List<string>(c.AssignedEmployeeIds),
+                LockedSuccessChance = c.LockedSuccessChance,
+                LockedEngineerCount = c.LockedEngineerCount
+            });
+        }
+        return list;
+    }
+
+    private static Contract SaveDataToContract(ContractSaveData d)
+    {
+        return new Contract
+        {
+            ContractId = d.ContractId,
+            ClientRegion = d.ClientRegion,
+            ContractCategory = d.ContractCategory,
+            ReputationTierRequired = d.ReputationTierRequired,
+            BaseRewardGBP = d.BaseRewardGBP,
+            BaseCostGBP = d.BaseCostGBP,
+            DeadlineWeeks = d.DeadlineWeeks,
+            WeeksRemaining = d.WeeksRemaining,
+            BudgetAllocated = d.BudgetAllocated,
+            IsActive = d.IsActive,
+            AssignedEmployeeIds = new List<string>(d.AssignedEmployeeIds ?? new List<string>()),
+            LockedSuccessChance = d.LockedSuccessChance,
+            LockedEngineerCount = d.LockedEngineerCount
+        };
     }
 }

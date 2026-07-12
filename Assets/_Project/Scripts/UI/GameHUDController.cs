@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 /// <summary>
@@ -17,6 +18,7 @@ public class GameHudController : MonoBehaviour
     [SerializeField] private FinanceManager _financeManager;
     [SerializeField] private ContractManager _contractManager;
     [SerializeField] private ReputationManager _reputationManager;
+    [SerializeField] private SaveManager _saveManager;
 
     // — Nav Buttons ————————————————————————————————————————————
     private Button _navOverview;
@@ -51,6 +53,7 @@ public class GameHudController : MonoBehaviour
     // — Panel Controllers ——————————————————————————————————————
     private ResearchPanel _researchPanel;
     private ContractPanel _contractPanel;
+    private EmployeesPanel _employeesPanel;
 
     // — Internal State —————————————————————————————————————————
     private VisualElement _contentArea;
@@ -90,6 +93,7 @@ public class GameHudController : MonoBehaviour
         // populated by now since all Awake() calls complete before any Start().
         _researchPanel?.Build();
         _contractPanel?.Build();
+        _employeesPanel?.Build();
 
         ActivatePanel(AegisConstants.PANEL_OVERVIEW, _navOverview);
         UpdateSpeedVisualState(1f);
@@ -105,6 +109,8 @@ public class GameHudController : MonoBehaviour
         ContractManager.OnContractFailed += HandleContractResolved;
         ContractManager.OnOffersUpdated += HandleOffersUpdated;
         ContractManager.OnActiveContractsUpdated += HandleActiveUpdated;
+        EmployeeManager.OnEmployeeHired += HandleEmployeeHired;
+        EmployeeManager.OnHiringPoolRefreshed += HandlePoolRefreshed;
     }
 
     private void OnDisable()
@@ -117,6 +123,8 @@ public class GameHudController : MonoBehaviour
         ContractManager.OnContractFailed -= HandleContractResolved;
         ContractManager.OnOffersUpdated -= HandleOffersUpdated;
         ContractManager.OnActiveContractsUpdated -= HandleActiveUpdated;
+        EmployeeManager.OnEmployeeHired -= HandleEmployeeHired;
+        EmployeeManager.OnHiringPoolRefreshed -= HandlePoolRefreshed;
     }
 
     // — Element Caching ————————————————————————————————————————
@@ -218,6 +226,11 @@ public class GameHudController : MonoBehaviour
         {
             AddStubLabel(_contractsPanelRoot, "CONTRACTS — assign managers in Inspector");
         }
+        if (_employeeManager != null)
+        {
+            _employeesPanel = new EmployeesPanel(_employeesPanelRoot, _employeeManager);
+            _employeesPanel.OnHireRequested += HandleHireRequested;
+        }
     }
 
     private VisualElement MakePanelRoot()
@@ -275,6 +288,7 @@ public class GameHudController : MonoBehaviour
         // Refresh content when it becomes visible.
         if (panelName == AegisConstants.PANEL_RESEARCH) _researchPanel?.Refresh();
         if (panelName == AegisConstants.PANEL_CONTRACTS) _contractPanel?.Refresh();
+        if (panelName == AegisConstants.PANEL_EMPLOYEES) _employeesPanel?.Refresh();
 
         Debug.Log($"[GameHud] Panel active: {panelName}");
     }
@@ -395,17 +409,33 @@ public class GameHudController : MonoBehaviour
 
     private void HandleContractAccept(Contract contract)
     {
-        if (_contractManager == null || _employeeManager == null) return;
+        if (_contractManager == null || _contractPanel == null) return;
 
-        // DD-14: collect all unassigned Engineers at acceptance time.
-        var engineers = new List<Employee>();
-        foreach (Employee emp in _employeeManager.Employees)
-        {
-            if (emp.Role == EmployeeRole.Engineer && string.IsNullOrEmpty(emp.Assignment))
-                engineers.Add(emp);
-        }
+        // Explicit selection — read engineers picked by the player in ContractPanel.
+        // DD-14 auto-assignment is fully replaced. QA-008 is resolved below.
+        var engineers = _contractPanel._lastSelectedEngineers
+                        ?? new System.Collections.Generic.List<Employee>();
 
-        bool accepted = _contractManager.AcceptContract(contract, engineers);
-        if (accepted) _contractPanel?.Refresh();
+        _contractManager.AcceptContract(contract, engineers);
+        _contractPanel._lastSelectedEngineers = null;
+        _contractPanel.Refresh();
+    }
+
+    private void HandleHireRequested(HiringCandidate candidate)
+    {
+        _employeeManager.HireCandidate(candidate);
+        _employeesPanel?.Refresh();
+    }
+
+    private void HandleEmployeeHired(Employee emp)
+    {
+        _employeesPanel?.Refresh();
+        _contractPanel?.Refresh(); // Engineer availability updates.
+    }
+
+    private void HandlePoolRefreshed(IReadOnlyList<HiringCandidate> pool)
+    {
+        if (_activePanelName == AegisConstants.PANEL_EMPLOYEES)
+            _employeesPanel?.Refresh();
     }
 }

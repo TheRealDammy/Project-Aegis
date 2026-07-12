@@ -119,6 +119,56 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &101518432
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 101518434}
+  - component: {fileID: 101518433}
+  m_Layer: 0
+  m_Name: SaveManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &101518433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101518432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cfc97c621a1ab44b87b87bbaeb9b0ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _timeManager: {fileID: 583236236}
+  _financeManager: {fileID: 1914187426}
+  _reputationManager: {fileID: 1006201366}
+  _employeeManager: {fileID: 1119569432}
+  _researchManager: {fileID: 549565405}
+  _contractManager: {fileID: 2026381468}
+--- !u!4 &101518434
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101518432}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &234549142
 GameObject:
   m_ObjectHideFlags: 0
@@ -190,6 +240,7 @@ MonoBehaviour:
   _financeManager: {fileID: 1914187426}
   _contractManager: {fileID: 2026381468}
   _reputationManager: {fileID: 1006201366}
+  _saveManager: {fileID: 101518433}
 --- !u!1 &549565404
 GameObject:
   m_ObjectHideFlags: 0
@@ -508,7 +559,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _availableTraits: []
-  _autoHireForTesting: 1
 --- !u!4 &1119569433
 Transform:
   m_ObjectHideFlags: 0
@@ -632,3 +682,4 @@ SceneRoots:
   - {fileID: 1914187427}
   - {fileID: 549565406}
   - {fileID: 1006201367}
+  - {fileID: 101518434}

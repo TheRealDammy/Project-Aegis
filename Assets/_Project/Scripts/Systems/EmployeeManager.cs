@@ -21,7 +21,6 @@ public class EmployeeManager : MonoBehaviour
     /// from Assets/_Project/Data/Employees/. Empty = no traits generated (valid for Phase 1 testing).
     /// </summary>
     [SerializeField] private TraitSO[] _availableTraits;
-    [SerializeField] private bool _autoHireForTesting = false;
 
     // — Public Properties ——————————————————————————————————
     public IReadOnlyList<HiringCandidate> HiringPool => _hiringPool;
@@ -30,6 +29,13 @@ public class EmployeeManager : MonoBehaviour
     // — Private Fields ————————————————————————————————————
     private readonly List<HiringCandidate> _hiringPool = new List<HiringCandidate>();
     private readonly List<Employee> _employees = new List<Employee>();
+
+    // Persisted in save data — must not reset on load.
+    // Ensures IDs are unique across save/load cycles.
+    private int _employeeIdCounter = 0;
+
+    private string GenerateEmployeeId() =>
+        string.Format(AegisConstants.EMPLOYEE_ID_FORMAT, ++_employeeIdCounter);
 
     // Phase is hardcoded to 1 at M1 — wired to ReputationManager.OnTierChanged in M2.
     private int _currentPhase = 1;
@@ -67,44 +73,6 @@ public class EmployeeManager : MonoBehaviour
     {
         FillPool();
         Debug.Log($"[EmployeeManager] Pool initialised: {_hiringPool.Count} candidates.");
-
-        if (_autoHireForTesting)
-            AutoHireForTesting();
-    }
-
-    /// <summary>
-    /// DEV ONLY — auto-hires one Researcher and one Engineer for testing without
-    /// the EMP panel. Enable via Inspector checkbox. Remove when EMP panel is built.
-    /// </summary>
-    private void AutoHireForTesting()
-    {
-        bool hiredResearcher = false;
-        bool hiredEngineer = false;
-
-        // Iterate a copy — HireCandidate modifies the pool.
-        var snapshot = new System.Collections.Generic.List<HiringCandidate>(_hiringPool);
-        foreach (HiringCandidate candidate in snapshot)
-        {
-            if (!hiredResearcher && candidate.Role == EmployeeRole.Researcher)
-            {
-                HireCandidate(candidate);
-                hiredResearcher = true;
-                Debug.Log($"[DEV] Auto-hired Researcher: {candidate.Name}");
-            }
-            else if (!hiredEngineer && candidate.Role == EmployeeRole.Engineer)
-            {
-                HireCandidate(candidate);
-                hiredEngineer = true;
-                Debug.Log($"[DEV] Auto-hired Engineer: {candidate.Name}");
-            }
-
-            if (hiredResearcher && hiredEngineer) break;
-        }
-
-        if (!hiredResearcher)
-            Debug.LogWarning("[DEV] No Researcher in initial pool — re-enter Play mode to retry.");
-        if (!hiredEngineer)
-            Debug.LogWarning("[DEV] No Engineer in initial pool — re-enter Play mode to retry.");
     }
 
     private void HandleTierChanged(int newTier)
@@ -164,19 +132,52 @@ public class EmployeeManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Finds an active roster employee by exact name match.
-    /// Returns null if not found. Name-based lookup is a temporary M3 solution —
-    /// replace with stable employee ID at save/load implementation (M4).
+    /// Finds a roster employee by stable EmployeeId. Returns null if not found.
+    /// Always use this method for inter-manager employee resolution.
+    /// Name-based lookup is prohibited — names are not unique.
     /// </summary>
-    public Employee GetEmployeeByName(string name)
+    public Employee GetEmployeeById(string employeeId)
     {
+        if (string.IsNullOrEmpty(employeeId)) return null;
         foreach (Employee emp in _employees)
-        {
-            if (emp.Name == name)
-                return emp;
-        }
+            if (emp.EmployeeId == employeeId) return emp;
         return null;
     }
+
+    public void PopulateSaveData(GameSaveData data)
+    {
+        data.EmployeeIdCounter = _employeeIdCounter;
+
+        data.Employees = new List<EmployeeSaveData>();
+        foreach (Employee emp in _employees)
+            data.Employees.Add(EmployeeToSaveData(emp));
+
+        data.HiringPool = new List<HiringCandidateSaveData>();
+        foreach (HiringCandidate candidate in _hiringPool)
+            data.HiringPool.Add(CandidateToSaveData(candidate));
+    }
+
+    public void LoadFromSaveData(GameSaveData data)
+    {
+        _employeeIdCounter = data.EmployeeIdCounter;
+        _employees.Clear();
+        _hiringPool.Clear();
+
+        Dictionary<string, TraitSO> traitLookup = BuildTraitLookup();
+
+        if (data.Employees != null)
+            foreach (EmployeeSaveData d in data.Employees)
+                _employees.Add(SaveDataToEmployee(d, traitLookup));
+
+        if (data.HiringPool != null)
+            foreach (HiringCandidateSaveData d in data.HiringPool)
+                _hiringPool.Add(SaveDataToCandidate(d, traitLookup));
+
+        OnHiringPoolRefreshed?.Invoke(_hiringPool);
+        Debug.Log($"[EmployeeManager] Loaded {_employees.Count} employees, " +
+                  $"{_hiringPool.Count} candidates. ID counter: {_employeeIdCounter}.");
+    }
+    
 
     // — Private Methods ————————————————————————————————————
 
@@ -233,6 +234,7 @@ public class EmployeeManager : MonoBehaviour
 
         return new HiringCandidate
         {
+            EmployeeId = GenerateEmployeeId(),   // NEW
             Name = name,
             Role = role,
             Stats = stats,
@@ -370,5 +372,118 @@ public class EmployeeManager : MonoBehaviour
         string first = _firstNames[Random.Range(0, _firstNames.Length)];
         string last = _lastNames[Random.Range(0, _lastNames.Length)];
         return $"{first} {last}";
+    }
+
+    // — Save conversion helpers ————————————————————————————
+
+    private EmployeeSaveData EmployeeToSaveData(Employee emp)
+    {
+        var traitIds = new List<string>();
+        foreach (TraitSO trait in emp.Traits)
+            if (!string.IsNullOrEmpty(trait.TraitId)) traitIds.Add(trait.TraitId);
+
+        return new EmployeeSaveData
+        {
+            EmployeeId = emp.EmployeeId,
+            Name = emp.Name,
+            Role = emp.Role.ToString(),
+            Stats = new Dictionary<string, float>(emp.Stats),
+            TraitIds = traitIds,
+            WeeklySalary = emp.WeeklySalary,
+            Assignment = emp.Assignment,
+            Happiness = emp.Happiness
+        };
+    }
+
+    private HiringCandidateSaveData CandidateToSaveData(HiringCandidate c)
+    {
+        var traitIds = new List<string>();
+        foreach (TraitSO trait in c.Traits)
+            if (!string.IsNullOrEmpty(trait.TraitId)) traitIds.Add(trait.TraitId);
+
+        return new HiringCandidateSaveData
+        {
+            EmployeeId = c.EmployeeId,
+            Name = c.Name,
+            Role = c.Role.ToString(),
+            Stats = new Dictionary<string, float>(c.Stats),
+            TraitIds = traitIds,
+            WeeklySalary = c.WeeklySalary,
+            WeeksAvailable = c.WeeksAvailable
+        };
+    }
+
+    // — Load conversion helpers ————————————————————————————
+
+    private Employee SaveDataToEmployee(EmployeeSaveData d, Dictionary<string, TraitSO> traitLookup)
+    {
+        return new Employee
+        {
+            EmployeeId = d.EmployeeId,
+            Name = d.Name,
+            Role = ParseRole(d.Role),
+            Stats = new Dictionary<string, float>(d.Stats ?? new Dictionary<string, float>()),
+            Traits = ResolveTrait(d.TraitIds, traitLookup),
+            WeeklySalary = d.WeeklySalary,
+            Assignment = d.Assignment,
+            Happiness = d.Happiness
+        };
+    }
+
+    private HiringCandidate SaveDataToCandidate(HiringCandidateSaveData d,
+                                                 Dictionary<string, TraitSO> traitLookup)
+    {
+        return new HiringCandidate
+        {
+            EmployeeId = d.EmployeeId,
+            Name = d.Name,
+            Role = ParseRole(d.Role),
+            Stats = new Dictionary<string, float>(d.Stats ?? new Dictionary<string, float>()),
+            Traits = ResolveTrait(d.TraitIds, traitLookup),
+            WeeklySalary = d.WeeklySalary,
+            WeeksAvailable = d.WeeksAvailable
+        };
+    }
+
+    private static EmployeeRole ParseRole(string roleString)
+    {
+        if (Enum.TryParse(roleString, out EmployeeRole role)) return role;
+        Debug.LogWarning($"[EmployeeManager] Unknown role string '{roleString}'. Defaulting to Engineer.");
+        return EmployeeRole.Engineer;
+    }
+
+    private static List<TraitSO> ResolveTrait(List<string> traitIds,
+                                               Dictionary<string, TraitSO> lookup)
+    {
+        var traits = new List<TraitSO>();
+        if (traitIds == null) return traits;
+
+        foreach (string id in traitIds)
+        {
+            if (lookup.TryGetValue(id, out TraitSO trait))
+                traits.Add(trait);
+            else
+                Debug.LogWarning($"[EmployeeManager] TraitId '{id}' not found in available traits. " +
+                                 "Trait skipped — check TraitSO.TraitId fields.");
+        }
+        return traits;
+    }
+
+    private Dictionary<string, TraitSO> BuildTraitLookup()
+    {
+        var lookup = new Dictionary<string, TraitSO>();
+        if (_availableTraits == null) return lookup;
+        foreach (TraitSO trait in _availableTraits)
+        {
+            if (trait == null || string.IsNullOrEmpty(trait.TraitId)) continue;
+            if (lookup.ContainsKey(trait.TraitId))
+            {
+                Debug.LogWarning($"[EmployeeManager] Duplicate TraitId '{trait.TraitId}'. " +
+                                 "One will be silently skipped. Fix the TraitSO asset.");
+                continue;
+            }
+            lookup[trait.TraitId] = trait;
+        }
+        return lookup;
     }
 }

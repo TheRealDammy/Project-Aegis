@@ -428,3 +428,116 @@
 .rep-label {
     color: #0A8A8A; /* Signal Teal — reputation is positive-state colour */
 }
+
+/* ══════════════════════════════════════════════════════════
+   EMPLOYEES PANEL
+   Two sections: Hiring Pool (candidates) and Roster (staff).
+   ══════════════════════════════════════════════════════════ */
+
+.employees-panel {
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+/* Left column: hiring pool. Right column: roster. */
+.emp-column {
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 16px;
+    overflow: hidden;
+}
+
+.emp-column--left {
+    border-right-width: 1px;
+    border-right-color: #2E4060;
+}
+
+.emp-section-header {
+    color: #8A9BB5;
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+    padding-bottom: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: #2E4060;
+    margin-bottom: 8px;
+}
+
+/* ——— Candidate / Employee Card —————————————————————————— */
+
+.emp-card {
+    flex-direction: column;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    background-color: #1A2535;
+    border-width: 1px;
+    border-color: #2E4060;
+    border-left-width: 3px;
+    border-left-color: #2E4060;
+    border-radius: 0;
+}
+
+.emp-card--candidate {
+    border-left-color: #8A9BB5;
+}
+
+.emp-card--expiring {
+    /* Candidate with 1 week remaining */
+    border-left-color: #E8A020;
+}
+
+.emp-card--rostered {
+    border-left-color: #2DB87A;
+}
+
+.emp-card--assigned {
+    border-left-color: #0A8A8A;
+}
+
+.emp-card-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.emp-card-name {
+    color: #E8EDF3;
+    font-size: 12px;
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+
+.emp-card-role {
+    color: #8A9BB5;
+    font-size: 11px;
+}
+
+.emp-card-detail {
+    color: #8A9BB5;
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.emp-card-expiry {
+    color: #E8A020;
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.emp-card-expiry--urgent {
+    color: #C0392B;
+}
+
+.emp-hire-btn {
+    margin-top: 6px;
+    height: 24px;
+    background-color: #0A8A8A;
+    border-width: 0;
+    border-radius: 0;
+    color: #E8EDF3;
+    font-size: 11px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.emp-hire-btn:hover { background-color: #0BAAAA; }

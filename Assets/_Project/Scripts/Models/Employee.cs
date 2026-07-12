@@ -10,6 +10,12 @@ using UnityEngine;
 [Serializable]
 public class Employee
 {
+    /// <summary>
+    /// Stable unique identifier. Assigned once at candidate generation. Never changes.
+    /// All inter-manager references use this field. Name is display-only.
+    /// </summary>
+    public string EmployeeId;
+
     // — Identity ——————————————————————————————————————————
     public string Name;
     public EmployeeRole Role;

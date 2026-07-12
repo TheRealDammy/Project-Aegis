@@ -140,4 +140,16 @@ public static class AegisConstants
 
     // — HUD Element Names (additions) ————————————————————————
     public const string HUD_REPUTATION_LABEL = "ReputationLabel";
+
+    // — Save System ————————————————————————————————————————————
+    public const string SAVE_FOLDER = "Saves";
+    public const string SAVE_AUTOSAVE_FILENAME = "save_autosave.json";
+    public const string SAVE_SLOT_FILENAME_FORMAT = "save_slot_{0}.json";
+    public const int SAVE_MANUAL_SLOT_COUNT = 3;
+    public const int AUTOSAVE_INTERVAL_WEEKS = 5;
+
+    // — Employee IDs ——————————————————————————————————————————
+    // Format: "EMP_0001". Counter persisted in save data.
+    // Never derive identity from display name.
+    public const string EMPLOYEE_ID_FORMAT = "EMP_{0:D4}";
 }
