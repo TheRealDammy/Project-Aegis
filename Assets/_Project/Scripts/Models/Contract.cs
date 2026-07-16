@@ -36,4 +36,12 @@ public class Contract
     /// Stored for display purposes — matches AssignedEmployeeNames.Count at lock time.
     /// </summary>
     public int LockedEngineerCount;
+
+    /// <summary>
+    /// True after the first tick where this contract had no engineers assigned.
+    /// Prevents spamming the notification every tick.
+    /// Not saved — resets to false on load, which is correct (re-warn after reload).
+    /// </summary>
+    [NonSerialized]
+    public bool HasWarnedAboutNoEngineer;
 }

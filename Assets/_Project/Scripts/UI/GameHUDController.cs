@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 /// </summary>
 public class GameHudController : MonoBehaviour
 {
-    // — Serialized Fields —————————————————————————————————————
+    // â€” Serialized Fields â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     [SerializeField] private UIDocument _hudDocument;
     [SerializeField] private TimeManager _timeManager;
     [SerializeField] private ResearchManager _researchManager;
@@ -20,7 +20,7 @@ public class GameHudController : MonoBehaviour
     [SerializeField] private ReputationManager _reputationManager;
     [SerializeField] private SaveManager _saveManager;
 
-    // — Nav Buttons ————————————————————————————————————————————
+    // â€” Nav Buttons â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private Button _navOverview;
     private Button _navResearch;
     private Button _navEmployees;
@@ -29,19 +29,19 @@ public class GameHudController : MonoBehaviour
     private Button _navWorld;
     private Button[] _allNavButtons;
 
-    // — Speed Buttons ——————————————————————————————————————————
+    // â€” Speed Buttons â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private Button _pauseButton;
     private Button _speed1Button;
     private Button _speed2Button;
     private Button _speed4Button;
     private Button[] _allSpeedButtons;
 
-    // — HUD Labels —————————————————————————————————————————————
+    // â€” HUD Labels â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private Label _weekLabel;
     private Label _cashLabel;
     private Label _reputationLabel;
 
-    // — Panel Roots — all live in ContentArea simultaneously ——
+    // â€” Panel Roots â€” all live in ContentArea simultaneously â€”â€”
     // ActivatePanel shows one, hides the rest via display style.
     private VisualElement _overviewPanelRoot;
     private VisualElement _researchPanelRoot;
@@ -50,18 +50,19 @@ public class GameHudController : MonoBehaviour
     private VisualElement _marketPanelRoot;
     private VisualElement _worldPanelRoot;
 
-    // — Panel Controllers ——————————————————————————————————————
+    // â€” Panel Controllers â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private ResearchPanel _researchPanel;
     private ContractPanel _contractPanel;
     private EmployeesPanel _employeesPanel;
+    private NotificationQueue _notifications;
 
-    // — Internal State —————————————————————————————————————————
+    // â€” Internal State â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private VisualElement _contentArea;
 
     // Add this field to track the currently active panel name
     private string _activePanelName;
 
-    // — Unity Lifecycle ————————————————————————————————————————
+    // â€” Unity Lifecycle â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private void Awake()
     {
         if (_hudDocument == null)
@@ -71,7 +72,7 @@ public class GameHudController : MonoBehaviour
         }
 
         // TimeManager can be assigned in Inspector or found here.
-        // Inspector assignment is preferred — FindObjectOfType is a fallback.
+        // Inspector assignment is preferred â€” FindObjectOfType is a fallback.
         if (_timeManager == null)
         {
             _timeManager = FindFirstObjectByType<TimeManager>();
@@ -89,7 +90,7 @@ public class GameHudController : MonoBehaviour
 
     private void Start()
     {
-        // Build() deferred from Awake — ResearchManager._nodeById is guaranteed
+        // Build() deferred from Awake â€” ResearchManager._nodeById is guaranteed
         // populated by now since all Awake() calls complete before any Start().
         _researchPanel?.Build();
         _contractPanel?.Build();
@@ -127,7 +128,7 @@ public class GameHudController : MonoBehaviour
         EmployeeManager.OnHiringPoolRefreshed -= HandlePoolRefreshed;
     }
 
-    // — Element Caching ————————————————————————————————————————
+    // â€” Element Caching â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private void CacheHUDElements(VisualElement root)
     {
         _weekLabel = root.Q<Label>(AegisConstants.HUD_WEEK_LABEL);
@@ -157,7 +158,7 @@ public class GameHudController : MonoBehaviour
 
         _contentArea = root.Q<VisualElement>("ContentArea");
 
-        // Validate everything. Q<>() returns null silently — catch it here.
+        // Validate everything. Q<>() returns null silently â€” catch it here.
         if (_weekLabel == null) Debug.LogError("[GameHudController] WeekLabel not found in UXML.");
         if (_cashLabel == null) Debug.LogError("[GameHudController] CashLabel not found in UXML.");
         if (_contentArea == null) Debug.LogError("[GameHudController] ContentArea not found in UXML. " +
@@ -173,12 +174,12 @@ public class GameHudController : MonoBehaviour
             if (btn == null) Debug.LogError("[GameHudController] Speed button returned null from Q<>().");
     }
 
-    // — Content Area Setup —————————————————————————————————————
+    // â€” Content Area Setup â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
 
     /// <summary>
     /// Clears any UXML-defined children from ContentArea (removes the old
     /// ActivePanelLabel placeholder) and builds one root VE per panel.
-    /// All roots start hidden — ActivatePanel reveals the correct one.
+    /// All roots start hidden â€” ActivatePanel reveals the correct one.
     /// </summary>
     private void BuildContentArea()
     {
@@ -212,7 +213,7 @@ public class GameHudController : MonoBehaviour
         }
         else
         {
-            AddStubLabel(_researchPanelRoot, "RESEARCH — assign managers in Inspector");
+            AddStubLabel(_researchPanelRoot, "RESEARCH â€” assign managers in Inspector");
             Debug.LogWarning("[GameHudController] ResearchManager or EmployeeManager not assigned.");
         }
 
@@ -222,15 +223,18 @@ public class GameHudController : MonoBehaviour
                 _contractsPanelRoot, _contractManager, _employeeManager);
             _contractPanel.OnContractAcceptRequested += HandleContractAccept;
         }
-        else
+
+        if (_contractManager != null && _employeeManager != null)
         {
-            AddStubLabel(_contractsPanelRoot, "CONTRACTS — assign managers in Inspector");
-        }
-        if (_employeeManager != null)
-        {
-            _employeesPanel = new EmployeesPanel(_employeesPanelRoot, _employeeManager);
+            _employeesPanel = new EmployeesPanel(
+                _employeesPanelRoot, _employeeManager, _contractManager);
             _employeesPanel.OnHireRequested += HandleHireRequested;
+            _employeesPanel.OnAssignToContractRequested += HandleAssignToContract;
         }
+
+        // Notification system â€” attached to root so banners float above all panels.
+        _notifications = new NotificationQueue(
+            _hudDocument.rootVisualElement);
     }
 
     private VisualElement MakePanelRoot()
@@ -250,7 +254,7 @@ public class GameHudController : MonoBehaviour
         parent.Add(label);
     }
 
-    // — Nav Callbacks ——————————————————————————————————————————
+    // â€” Nav Callbacks â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private void RegisterNavCallbacks()
     {
         if (_navOverview == null || _navResearch == null) return;
@@ -299,7 +303,7 @@ public class GameHudController : MonoBehaviour
             panel.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
     }
 
-    // — Speed Callbacks ————————————————————————————————————————
+    // â€” Speed Callbacks â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private void RegisterSpeedCallbacks()
     {
         if (_pauseButton == null) return;
@@ -334,7 +338,7 @@ public class GameHudController : MonoBehaviour
         active?.AddToClassList("speed-btn--active");
     }
 
-    // — Event Handlers —————————————————————————————————————————
+    // â€” Event Handlers â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private void HandleWeekChanged(int newWeek)
     {
         if (_weekLabel != null)
@@ -344,7 +348,7 @@ public class GameHudController : MonoBehaviour
     private void HandleCashChanged(float newCash)
     {
         if (_cashLabel != null)
-            _cashLabel.text = $"£{newCash:N0}";
+            _cashLabel.text = $"Â£{newCash:N0}";
     }
 
     private void HandleResearchCompleted(ResearchNodeSO node)
@@ -409,33 +413,81 @@ public class GameHudController : MonoBehaviour
 
     private void HandleContractAccept(Contract contract)
     {
-        if (_contractManager == null || _contractPanel == null) return;
+        _contractManager?.AcceptContract(contract);
+        _contractPanel?.Refresh();
 
-        // Explicit selection — read engineers picked by the player in ContractPanel.
-        // DD-14 auto-assignment is fully replaced. QA-008 is resolved below.
-        var engineers = _contractPanel._lastSelectedEngineers
-                        ?? new System.Collections.Generic.List<Employee>();
-
-        _contractManager.AcceptContract(contract, engineers);
-        _contractPanel._lastSelectedEngineers = null;
-        _contractPanel.Refresh();
+        // Prompt player to assign an engineer
+        _notifications?.Show(
+            "Contract Accepted",
+            $"{contract.ContractCategory} â€” assign an engineer in the EMP panel.",
+            NotificationQueue.Type.Warning);
     }
+
+    // â€”â€”â€” Hiring â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
 
     private void HandleHireRequested(HiringCandidate candidate)
     {
-        _employeeManager.HireCandidate(candidate);
-        _employeesPanel?.Refresh();
+        bool hired = _employeeManager.HireCandidate(candidate);
+        if (hired)
+        {
+            _employeesPanel?.Refresh();
+            _contractPanel?.Refresh();
+        }
     }
 
     private void HandleEmployeeHired(Employee emp)
     {
         _employeesPanel?.Refresh();
-        _contractPanel?.Refresh(); // Engineer availability updates.
     }
 
     private void HandlePoolRefreshed(IReadOnlyList<HiringCandidate> pool)
     {
         if (_activePanelName == AegisConstants.PANEL_EMPLOYEES)
             _employeesPanel?.Refresh();
+    }
+
+    // â€”â€”â€” Engineer Assignment â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+
+    private void HandleAssignToContract(Employee engineer, string contractId)
+    {
+        if (_contractManager == null) return;
+
+        bool success = _contractManager.AssignEngineer(contractId, engineer);
+        if (success)
+        {
+            _employeesPanel?.Refresh();
+            _contractPanel?.Refresh();
+            _notifications?.Show(
+                "Engineer Assigned",
+                $"{engineer.Name} â†’ {contractId}",
+                NotificationQueue.Type.Success);
+        }
+        else
+        {
+            _notifications?.Show(
+                "Assignment Failed",
+                $"{engineer.Name} could not be assigned to {contractId}.",
+                NotificationQueue.Type.Failure);
+        }
+    }
+
+    // â€”â€”â€” Contract Status â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+
+    private void HandleContractUnstaffed(Contract contract)
+    {
+        _notifications?.Show(
+            "Contract Stalled",
+            $"{contract.ContractId} ({contract.ContractCategory}) â€” " +
+            $"no engineer assigned. Go to EMP panel.",
+            NotificationQueue.Type.Warning);
+
+        if (_activePanelName == AegisConstants.PANEL_CONTRACTS)
+            _contractPanel?.Refresh();
+    }
+
+    private void HandleActiveContractsUpdated(IReadOnlyList<Contract> active)
+    {
+        if (_activePanelName == AegisConstants.PANEL_CONTRACTS)
+            _contractPanel?.Refresh();
     }
 }
