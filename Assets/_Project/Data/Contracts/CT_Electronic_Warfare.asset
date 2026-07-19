@@ -10,30 +10,30 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eeafa80146f49f241805c7f12bc260eb, type: 3}
-  m_Name: CT_Basic_Surveillance
+  m_Name: CT_Electronic_Warfare
   m_EditorClassIdentifier: 
-  ContractCategory: Surveillance
-  BaseRewardGBP: 40000
-  BaseDeadlineWeeks: 8
-  MinReputationTier: 1
-  RequiredResearch: {fileID: 0}
+  ContractCategory: Electronic Warfare
+  BaseRewardGBP: 400000
+  BaseDeadlineWeeks: 13
+  MinReputationTier: 2
+  RequiredResearch: {fileID: 11400000, guid: 473541873db87e74c884e979a2a37a0f, type: 2}
   RewardScaleByReputation:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: 0.14999998
-      outSlope: 0.14999998
+      inSlope: 0.6
+      outSlope: 0.6
       tangentMode: 34
       weightedMode: 0
       inWeight: 0
       outWeight: 0.33333334
     - serializedVersion: 3
       time: 1
-      value: 1.15
-      inSlope: 0.14999998
-      outSlope: 0.14999998
+      value: 1.6
+      inSlope: 0.6
+      outSlope: 0.6
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334

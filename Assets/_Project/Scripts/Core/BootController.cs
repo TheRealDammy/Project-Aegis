@@ -16,12 +16,15 @@ public class BootController : MonoBehaviour
     {
         Debug.Log("[Boot] Boot sequence started.");
 
-        // M0: nothing to initialise yet.
-        // Future: AudioManager.Initialize(), SettingsManager.Load(), etc. go here,
-        // each as their own yield step so they can be async if needed.
+        // Initialize SettingsManager first — applies audio/display settings
+        // before any scene renders visuals or audio.
+        if (SettingsManager.Instance == null)
+        {
+            var go = new GameObject("[SettingsManager]");
+            go.AddComponent<SettingsManager>();
+            // SettingsManager.Awake handles DontDestroyOnLoad and loads prefs.
+        }
 
-        // Yield one frame before transitioning. Prevents a single-frame black flash
-        // that could be mistaken for a crash on slower machines.
         yield return null;
 
         Debug.Log("[Boot] Boot sequence complete. Loading Main Menu.");

@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -10,37 +10,37 @@ using Random = UnityEngine.Random;
 /// </summary>
 public class EmployeeManager : MonoBehaviour
 {
-    // — Static Events ——————————————————————————————————————
+    // â€” Static Events â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     public static event Action<IReadOnlyList<HiringCandidate>> OnHiringPoolRefreshed;
     public static event Action<Employee> OnEmployeeHired;
     public static event Action<Employee> OnEmployeeFired;
 
-    // — Serialized Fields ——————————————————————————————————
+    // â€” Serialized Fields â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     /// <summary>
     /// All TraitSOs available for candidate generation. Assign in Inspector
     /// from Assets/_Project/Data/Employees/. Empty = no traits generated (valid for Phase 1 testing).
     /// </summary>
     [SerializeField] private TraitSO[] _availableTraits;
 
-    // — Public Properties ——————————————————————————————————
+    // â€” Public Properties â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     public IReadOnlyList<HiringCandidate> HiringPool => _hiringPool;
     public IReadOnlyList<Employee> Employees => _employees;
 
-    // — Private Fields ————————————————————————————————————
+    // â€” Private Fields â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private readonly List<HiringCandidate> _hiringPool = new List<HiringCandidate>();
     private readonly List<Employee> _employees = new List<Employee>();
 
-    // Persisted in save data — must not reset on load.
+    // Persisted in save data â€” must not reset on load.
     // Ensures IDs are unique across save/load cycles.
     private int _employeeIdCounter = 0;
 
     private string GenerateEmployeeId() =>
         string.Format(AegisConstants.EMPLOYEE_ID_FORMAT, ++_employeeIdCounter);
 
-    // Phase is hardcoded to 1 at M1 — wired to ReputationManager.OnTierChanged in M2.
+    // Phase is hardcoded to 1 at M1 â€” wired to ReputationManager.OnTierChanged in M2.
     private int _currentPhase = 1;
 
-    // — Static Name Tables ————————————————————————————————
+    // â€” Static Name Tables â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     // International, role-neutral names. Expand post-launch for flavour.
     private static readonly string[] _firstNames =
     {
@@ -56,7 +56,7 @@ public class EmployeeManager : MonoBehaviour
         "Park", "Walsh", "Nguyen", "Okonkwo", "Lindberg", "Moreau"
     };
 
-    // — Unity Lifecycle ————————————————————————————————————
+    // â€” Unity Lifecycle â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
     private void OnEnable()
     {
         TimeManager.OnWeekTick += HandleWeekTick;
@@ -77,19 +77,19 @@ public class EmployeeManager : MonoBehaviour
 
     private void HandleTierChanged(int newTier)
     {
-        // QA-004 closed. Phase now driven by reputation tier.
-        // Tier 1 = Phase 1, Tier 2–3 = Phase 2, Tier 4–5 = Phase 3.
+        // QA-005: Tier 1â€“2 â†’ Phase 1, Tier 3 â†’ Phase 2, Tier 4â€“5 â†’ Phase 3.
+        // Supersedes M3 mapping where Tier 2 was Phase 2.
         _currentPhase = newTier switch
         {
-            1 => 1,
-            2 or 3 => 2,
+            1 or 2 => 1,
+            3 => 2,
             4 or 5 => 3,
             _ => 1
         };
         Debug.Log($"[EmployeeManager] Phase updated to {_currentPhase} (Reputation Tier {newTier}).");
     }
 
-    // — Public Methods —————————————————————————————————————
+    // â€” Public Methods â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
 
     /// <summary>
     /// Hires a candidate from the pool, adds them to the roster,
@@ -100,7 +100,7 @@ public class EmployeeManager : MonoBehaviour
     {
         if (!_hiringPool.Contains(candidate))
         {
-            Debug.LogWarning($"[EmployeeManager] Cannot hire '{candidate.Name}' — no longer in pool.");
+            Debug.LogWarning($"[EmployeeManager] Cannot hire '{candidate.Name}' â€” no longer in pool.");
             return false;
         }
 
@@ -112,7 +112,7 @@ public class EmployeeManager : MonoBehaviour
         _hiringPool.Add(GenerateCandidate());
 
         OnEmployeeHired?.Invoke(newEmployee);
-        Debug.Log($"[EmployeeManager] Hired: {newEmployee.Name} ({newEmployee.Role}) @ £{newEmployee.WeeklySalary}/wk.");
+        Debug.Log($"[EmployeeManager] Hired: {newEmployee.Name} ({newEmployee.Role}) @ Â£{newEmployee.WeeklySalary}/wk.");
         return true;
     }
 
@@ -121,7 +121,7 @@ public class EmployeeManager : MonoBehaviour
     {
         if (!_employees.Contains(employee))
         {
-            Debug.LogWarning($"[EmployeeManager] Cannot fire '{employee.Name}' — not on roster.");
+            Debug.LogWarning($"[EmployeeManager] Cannot fire '{employee.Name}' â€” not on roster.");
             return false;
         }
 
@@ -134,7 +134,7 @@ public class EmployeeManager : MonoBehaviour
     /// <summary>
     /// Finds a roster employee by stable EmployeeId. Returns null if not found.
     /// Always use this method for inter-manager employee resolution.
-    /// Name-based lookup is prohibited — names are not unique.
+    /// Name-based lookup is prohibited â€” names are not unique.
     /// </summary>
     public Employee GetEmployeeById(string employeeId)
     {
@@ -179,7 +179,7 @@ public class EmployeeManager : MonoBehaviour
     }
     
 
-    // — Private Methods ————————————————————————————————————
+    // â€” Private Methods â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
 
     private void HandleWeekTick()
     {
@@ -200,7 +200,7 @@ public class EmployeeManager : MonoBehaviour
             }
         }
 
-        // Top up if below target — covers phase transitions and edge cases.
+        // Top up if below target â€” covers phase transitions and edge cases.
         FillPool();
 
         OnHiringPoolRefreshed?.Invoke(_hiringPool);
@@ -253,27 +253,28 @@ public class EmployeeManager : MonoBehaviour
     {
         float roll = Random.value;
 
-        if (_currentPhase == 1)
+        // Threshold values derived from cumulative weights in AegisConstants.
+        // Phase 1 example: [0,0.60) = Engineer, [0.60,0.85) = Researcher, [0.85,0.95) = Sales, [0.95,1] = Executive
+        (float eng, float res, float sal) = _currentPhase switch
         {
-            if (roll < 0.60f) return EmployeeRole.Engineer;
-            if (roll < 0.85f) return EmployeeRole.Researcher;
-            if (roll < 0.95f) return EmployeeRole.SalesManager;
-            return EmployeeRole.Executive;
-        }
-        if (_currentPhase == 2)
-        {
-            if (roll < 0.40f) return EmployeeRole.Engineer;
-            if (roll < 0.70f) return EmployeeRole.Researcher;
-            if (roll < 0.90f) return EmployeeRole.SalesManager;
-            return EmployeeRole.Executive;
-        }
-        // Phase 3
-        {
-            if (roll < 0.30f) return EmployeeRole.Engineer;
-            if (roll < 0.55f) return EmployeeRole.Researcher;
-            if (roll < 0.80f) return EmployeeRole.SalesManager;
-            return EmployeeRole.Executive;
-        }
+            1 => (AegisConstants.ROLE_WEIGHT_P1_ENGINEER,
+                  AegisConstants.ROLE_WEIGHT_P1_ENGINEER + AegisConstants.ROLE_WEIGHT_P1_RESEARCHER,
+                  AegisConstants.ROLE_WEIGHT_P1_ENGINEER + AegisConstants.ROLE_WEIGHT_P1_RESEARCHER
+                                                         + AegisConstants.ROLE_WEIGHT_P1_SALES),
+            2 => (AegisConstants.ROLE_WEIGHT_P2_ENGINEER,
+                  AegisConstants.ROLE_WEIGHT_P2_ENGINEER + AegisConstants.ROLE_WEIGHT_P2_RESEARCHER,
+                  AegisConstants.ROLE_WEIGHT_P2_ENGINEER + AegisConstants.ROLE_WEIGHT_P2_RESEARCHER
+                                                         + AegisConstants.ROLE_WEIGHT_P2_SALES),
+            _ => (AegisConstants.ROLE_WEIGHT_P3_ENGINEER,
+                  AegisConstants.ROLE_WEIGHT_P3_ENGINEER + AegisConstants.ROLE_WEIGHT_P3_RESEARCHER,
+                  AegisConstants.ROLE_WEIGHT_P3_ENGINEER + AegisConstants.ROLE_WEIGHT_P3_RESEARCHER
+                                                         + AegisConstants.ROLE_WEIGHT_P3_SALES)
+        };
+
+        if (roll < eng) return EmployeeRole.Engineer;
+        if (roll < res) return EmployeeRole.Researcher;
+        if (roll < sal) return EmployeeRole.SalesManager;
+        return EmployeeRole.Executive;
     }
 
     private Dictionary<string, float> GenerateStats(EmployeeRole role)
@@ -312,7 +313,7 @@ public class EmployeeManager : MonoBehaviour
 
     /// <summary>
     /// Draws traits without replacement using a partial Fisher-Yates shuffle.
-    /// 40% chance of 0 traits, 45% of 1, 15% of 2 — per OQ-03.
+    /// 40% chance of 0 traits, 45% of 1, 15% of 2 â€” per OQ-03.
     /// </summary>
     private List<TraitSO> RollTraits()
     {
@@ -330,7 +331,7 @@ public class EmployeeManager : MonoBehaviour
 
         if (count == 0) return result;
 
-        // Partial shuffle — swap each selected index with a random remaining index.
+        // Partial shuffle â€” swap each selected index with a random remaining index.
         var pool = new List<TraitSO>(_availableTraits);
         int draws = Mathf.Min(count, pool.Count);
 
@@ -374,7 +375,7 @@ public class EmployeeManager : MonoBehaviour
         return $"{first} {last}";
     }
 
-    // — Save conversion helpers ————————————————————————————
+    // â€” Save conversion helpers â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
 
     private EmployeeSaveData EmployeeToSaveData(Employee emp)
     {
@@ -413,7 +414,7 @@ public class EmployeeManager : MonoBehaviour
         };
     }
 
-    // — Load conversion helpers ————————————————————————————
+    // â€” Load conversion helpers â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
 
     private Employee SaveDataToEmployee(EmployeeSaveData d, Dictionary<string, TraitSO> traitLookup)
     {
@@ -464,7 +465,7 @@ public class EmployeeManager : MonoBehaviour
                 traits.Add(trait);
             else
                 Debug.LogWarning($"[EmployeeManager] TraitId '{id}' not found in available traits. " +
-                                 "Trait skipped — check TraitSO.TraitId fields.");
+                                 "Trait skipped â€” check TraitSO.TraitId fields.");
         }
         return traits;
     }

@@ -19,6 +19,9 @@ public class GameHudController : MonoBehaviour
     [SerializeField] private ContractManager _contractManager;
     [SerializeField] private ReputationManager _reputationManager;
     [SerializeField] private SaveManager _saveManager;
+    [SerializeField] private WorldEventManager _worldEventManager;
+    [SerializeField] private RivalManager _rivalManager;
+    [SerializeField] private MarketManager _marketManager;
 
     // — Nav Buttons ————————————————————————————————————————————
     private Button _navOverview;
@@ -55,12 +58,17 @@ public class GameHudController : MonoBehaviour
     private ContractPanel _contractPanel;
     private EmployeesPanel _employeesPanel;
     private NotificationQueue _notifications;
+    private PauseOverlay _pauseOverlay;
+    private SettingsPanel _settingsPanel;
 
     // — Internal State —————————————————————————————————————————
     private VisualElement _contentArea;
 
     // Add this field to track the currently active panel name
     private string _activePanelName;
+
+    private PlayerInputActions _inputActions;
+    private bool _isPaused;
 
     // — Unity Lifecycle ————————————————————————————————————————
     private void Awake()
@@ -79,6 +87,8 @@ public class GameHudController : MonoBehaviour
             if (_timeManager == null)
                 Debug.LogError("[GameHudController] TimeManager not found.");
         }
+
+        _inputActions = new PlayerInputActions();
 
         VisualElement root = _hudDocument.rootVisualElement;
 
@@ -102,6 +112,9 @@ public class GameHudController : MonoBehaviour
 
     private void OnEnable()
     {
+        _inputActions.UI.Pause.performed += OnPause;
+        _inputActions.Enable();
+
         TimeManager.OnWeekChanged += HandleWeekChanged;
         FinanceManager.OnCashChanged += HandleCashChanged;
         ResearchManager.OnResearchCompleted += HandleResearchCompleted;
@@ -112,10 +125,16 @@ public class GameHudController : MonoBehaviour
         ContractManager.OnActiveContractsUpdated += HandleActiveUpdated;
         EmployeeManager.OnEmployeeHired += HandleEmployeeHired;
         EmployeeManager.OnHiringPoolRefreshed += HandlePoolRefreshed;
+        WorldEventManager.OnEventStarted += HandleWorldEventStarted;
+        WorldEventManager.OnEventEnded += HandleWorldEventEnded;
+        SaveManager.OnLoadAttempted += HandleLoadAttempted;
     }
 
     private void OnDisable()
     {
+        _inputActions.UI.Pause.performed -= OnPause;
+        _inputActions.Disable();
+
         TimeManager.OnWeekChanged -= HandleWeekChanged;
         FinanceManager.OnCashChanged -= HandleCashChanged;
         ResearchManager.OnResearchCompleted -= HandleResearchCompleted;
@@ -126,6 +145,27 @@ public class GameHudController : MonoBehaviour
         ContractManager.OnActiveContractsUpdated -= HandleActiveUpdated;
         EmployeeManager.OnEmployeeHired -= HandleEmployeeHired;
         EmployeeManager.OnHiringPoolRefreshed -= HandlePoolRefreshed;
+        WorldEventManager.OnEventStarted -= HandleWorldEventStarted;
+        WorldEventManager.OnEventEnded -= HandleWorldEventEnded;
+        SaveManager.OnLoadAttempted -= HandleLoadAttempted;
+    }
+
+    private void OnPause(InputAction.CallbackContext context)
+    {
+        // ESC priority: close settings first, then close pause, then open pause.
+        if (_settingsPanel.IsVisible)
+        {
+            _settingsPanel.Hide();
+            return;
+        }
+
+        if (_isPaused)
+        {
+            HandleResume();
+            return;
+        }
+
+        HandlePause();
     }
 
     // — Element Caching ————————————————————————————————————————
@@ -216,6 +256,14 @@ public class GameHudController : MonoBehaviour
             AddStubLabel(_researchPanelRoot, "RESEARCH — assign managers in Inspector");
             Debug.LogWarning("[GameHudController] ResearchManager or EmployeeManager not assigned.");
         }
+
+        // Pause overlay and settings — overlays added to root, not ContentArea
+        VisualElement root = _hudDocument.rootVisualElement;
+        _pauseOverlay = new PauseOverlay(root);
+        _settingsPanel = new SettingsPanel(root, SettingsManager.Instance, _saveManager);
+
+        _pauseOverlay.OnResume += HandleResume;
+        _pauseOverlay.OnOpenSettings += HandleOpenSettings;
 
         if (_contractManager != null && _employeeManager != null)
         {
@@ -421,6 +469,59 @@ public class GameHudController : MonoBehaviour
             "Contract Accepted",
             $"{contract.ContractCategory} — assign an engineer in the EMP panel.",
             NotificationQueue.Type.Warning);
+    }
+
+    private void HandleWorldEventStarted(WorldEventSO worldEvent)
+    {
+        _notifications?.Show(
+            worldEvent.EventName,
+            worldEvent.Description,
+            NotificationQueue.Type.Warning);
+    }
+
+    private void HandleWorldEventEnded(WorldEventSO worldEvent)
+    {
+        _notifications?.Show(
+            $"{worldEvent.EventName} — Ended",
+            "Market conditions returning to baseline.",
+            NotificationQueue.Type.Success);
+    }
+
+    private void HandlePause()
+    {
+        _isPaused = true;
+        _timeManager?.SetSpeed(0f);
+        UpdateSpeedVisualState(0f);
+        _pauseOverlay.Show();
+    }
+
+    private void HandleResume()
+    {
+        _isPaused = false;
+        _pauseOverlay.Hide();
+        _settingsPanel.Hide();
+        _timeManager?.SetSpeed(1f);
+        UpdateSpeedVisualState(1f);
+    }
+
+    private void HandleOpenSettings()
+    {
+        _settingsPanel.Show();
+    }
+
+    private void HandleLoadAttempted(SaveLoadResult result, string message)
+    {
+        NotificationQueue.Type type = result == SaveLoadResult.Success
+            ? NotificationQueue.Type.Success
+            : NotificationQueue.Type.Failure;
+
+        _notifications?.Show(
+            result == SaveLoadResult.VersionMismatch ? "Save File Incompatible"
+          : result == SaveLoadResult.Success ? "Game Loaded"
+          : result == SaveLoadResult.FileNotFound ? "No Save Found"
+          : "Load Failed",
+            message,
+            type);
     }
 
     // ——— Hiring ————————————————————————————————————————————————

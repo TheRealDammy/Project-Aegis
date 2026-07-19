@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90969bea3a1cd4e4da3e1585574a7440, type: 3}
+  m_Name: PROD_GHOST
+  m_EditorClassIdentifier: 
+  ProductId: prod_signal_jamming
+  DisplayName: GHOST ECM Array
+  Description: 
+  RequiredResearch: {fileID: 11400000, guid: 473541873db87e74c884e979a2a37a0f, type: 2}
+  SatisfiesContractCategories:
+  - Electronic Warfare
+  DevelopmentCostGBP: 60000
+  DevelopmentWeeks: 6
+  ProductTier: 2
+  RequiredRoles: 

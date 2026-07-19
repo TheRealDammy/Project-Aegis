@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90969bea3a1cd4e4da3e1585574a7440, type: 3}
+  m_Name: PROD_PRISM
+  m_EditorClassIdentifier: 
+  ProductId: prod_basic_analytics
+  DisplayName: PRISM Analytics Suite
+  Description: 
+  RequiredResearch: {fileID: 11400000, guid: fbe9229c389587446ad4589c0e42760f, type: 2}
+  SatisfiesContractCategories:
+  - Intelligence Analytics
+  DevelopmentCostGBP: 25000
+  DevelopmentWeeks: 4
+  ProductTier: 1
+  RequiredRoles: 

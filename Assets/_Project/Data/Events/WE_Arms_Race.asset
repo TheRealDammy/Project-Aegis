@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5663e04980387a543abf361bfd3840fa, type: 3}
+  m_Name: WE_Arms_Race
+  m_EditorClassIdentifier: 
+  EventId: arms_race
+  EventName: Arms Race
+  Description: Multiple powers announce accelerated military modernization. AI and
+    targeting system demand rises globally. Rival research budgets increase.
+  DurationWeeks: 12
+  MarketModifiers:
+  - ContractCategory: Targeting Systems
+    DemandMultiplier: 1.4
+    RewardMultiplier: 1.25
+  - ContractCategory: Intelligence Systems
+    DemandMultiplier: 1.3
+    RewardMultiplier: 1.2
+  RivalModifiers:
+  - RivalName: Helix Systems
+    ProgressRateBonus: 0.3
+  - RivalName: Vanguard Robotics
+    ProgressRateBonus: 0.3
+  - RivalName: Titan Defence
+    ProgressRateBonus: 0.3
+  - RivalName: Nova Dynamics
+    ProgressRateBonus: 0.3

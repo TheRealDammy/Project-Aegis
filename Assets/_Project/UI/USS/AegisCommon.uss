@@ -740,3 +740,270 @@
     color: #8A9BB5;
     font-size: 11px;
 }
+/* ——— M5 NODE GRAPH: Connector lines ——————————————————————
+   A thin vertical line between each sequential node pair.
+   Styled by the state of the CHILD node it points toward.  */
+
+.node-connector {
+    width: 2px;
+    height: 20px;          /* 20px gap between node cards */
+    margin-left: 16px;     /* Align with node card's left accent border */
+    background-color: #2E4060; /* Wire Grey — locked state */
+}
+
+/* Connector is Signal Teal when the child node is reachable */
+.node-connector--active {
+    background-color: #0A8A8A;
+}
+
+/* ——— M5 NODE CARD: Enhanced state treatment —————————————— */
+
+/* Complete nodes fade slightly — they're done, not the focus */
+.node-card--complete {
+    opacity: 0.75;
+}
+
+/* Available nodes get a subtle left-border pulse via CSS transition */
+.node-card--available {
+    transition-property: border-left-color;
+    transition-duration: 600ms;
+    transition-timing-function: ease-in-out;
+}
+
+/* Progress fill animation for InProgress nodes */
+.node-progress-fill {
+    transition-property: width;
+    transition-duration: 400ms;
+    transition-timing-function: ease-out;
+}
+
+/* ══════════════════════════════════════════════════════════
+   NOTIFICATION ANIMATION — USS TRANSITION (not DOTween)
+   DOTween scoped to non-UITK per DD-08. USS handles this.
+   ══════════════════════════════════════════════════════════ */
+
+.notification-container {
+    position: absolute;
+    right: 16px;
+    top: 64px;
+    width: 320px;
+    flex-direction: column;
+}
+
+.notification-banner {
+    width: 320px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background-color: #1A2535;
+    border-width: 1px;
+    border-color: #2E4060;
+    border-left-width: 4px;
+    border-left-color: #8A9BB5;
+
+    /* Start translated right (off-screen) — transition slides it in */
+    translate: 340px 0;
+    transition-property: translate;
+    transition-duration: 200ms;
+    transition-timing-function: ease-out;
+    opacity: 0;
+    transition: translate 200ms ease-out, opacity 200ms ease-out;
+}
+
+/* Applied one frame after insertion — triggers the transition */
+.notification-banner--visible {
+    translate: 0 0;
+    opacity: 1;
+}
+
+.notification-banner--success { border-left-color: #2DB87A; }
+.notification-banner--warning { border-left-color: #E8A020; }
+.notification-banner--failure { border-left-color: #C0392B; }
+
+.notification-title {
+    color: #E8EDF3;
+    font-size: 12px;
+    -unity-font-style: bold;
+    margin-bottom: 2px;
+}
+
+.notification-body {
+    color: #8A9BB5;
+    font-size: 11px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   MODAL OVERLAY — shared base for Settings and Pause panels
+   Full-screen backdrop blocks pointer events to panels below.
+   ══════════════════════════════════════════════════════════ */
+
+.modal-backdrop {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    /* Semi-transparent Deep Slate — panels visible but dimmed behind */
+    background-color: rgba(17, 25, 35, 0.85);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-panel {
+    flex-direction: column;
+    background-color: #1A2535;
+    border-width: 1px;
+    border-color: #2E4060;
+    border-radius: 0;
+    padding: 0;
+}
+
+.modal-header {
+    flex-direction: row;
+    align-items: center;
+    background-color: #1E3A5F;
+    border-bottom-width: 1px;
+    border-bottom-color: #2E4060;
+    padding-left: 24px;
+    padding-right: 16px;
+    height: 48px;
+}
+
+.modal-title {
+    color: #E8EDF3;
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+    flex-grow: 1;
+}
+
+.modal-close-btn {
+    width: 32px;
+    height: 32px;
+    background-color: rgba(0,0,0,0);
+    border-width: 0;
+    color: #8A9BB5;
+    font-size: 16px;
+    -unity-text-align: middle-center;
+}
+
+.modal-close-btn:hover { color: #E8EDF3; background-color: #C0392B; }
+
+/* ——— Settings panel ——————————————————————————————————————— */
+
+.settings-panel {
+    width: 640px;
+}
+
+.settings-tab-bar {
+    flex-direction: row;
+    border-bottom-width: 1px;
+    border-bottom-color: #2E4060;
+    background-color: #111923;
+}
+
+.settings-tab {
+    height: 40px;
+    padding-left: 24px;
+    padding-right: 24px;
+    background-color: rgba(0,0,0,0);
+    border-width: 0;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0,0,0,0);
+    border-radius: 0;
+    color: #8A9BB5;
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.settings-tab:hover  { color: #E8EDF3; }
+.settings-tab--active {
+    color: #E8EDF3;
+    border-bottom-color: #0A8A8A;
+}
+
+.settings-content {
+    padding: 24px;
+    min-height: 280px;
+}
+
+/* Setting rows */
+.setting-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.setting-label {
+    color: #8A9BB5;
+    font-size: 12px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.setting-control {
+    flex-grow: 1;
+}
+
+/* Slot table in Save Data tab */
+.slot-row {
+    flex-direction: row;
+    align-items: center;
+    height: 48px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: #2E4060;
+}
+
+.slot-row--even { background-color: #1A2535; }
+.slot-row--odd  { background-color: #22304A; }
+
+.slot-name  { width: 80px; color: #8A9BB5; font-size: 11px; -unity-font-style: bold; letter-spacing: 1px; }
+.slot-week  { width: 80px; color: #E8EDF3; font-size: 14px; }
+.slot-time  { flex-grow: 1; color: #8A9BB5; font-size: 12px; }
+.slot-status-incompatible { color: #E8A020; font-size: 11px; }
+.slot-status-corrupted    { color: #C0392B; font-size: 11px; }
+
+.slot-delete-btn {
+    width: 72px;
+    height: 28px;
+    background-color: rgba(0,0,0,0);
+    border-width: 1px;
+    border-color: #C0392B;
+    border-radius: 0;
+    color: #C0392B;
+    font-size: 11px;
+    -unity-text-align: middle-center;
+}
+
+.slot-delete-btn:hover    { background-color: #C0392B; color: #E8EDF3; }
+.slot-delete-btn:disabled { border-color: #2E4060; color: #2E4060; }
+
+/* ——— Pause overlay ——————————————————————————————————————— */
+
+.pause-panel {
+    width: 320px;
+    align-items: stretch;
+}
+
+.pause-menu-btn {
+    height: 48px;
+    margin: 0;
+    margin-bottom: 1px;
+    background-color: rgba(0,0,0,0);
+    border-width: 0;
+    border-radius: 0;
+    color: #8A9BB5;
+    font-size: 13px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+    -unity-text-align: middle-center;
+    transition-property: background-color, color;
+    transition-duration: 100ms;
+}
+
+.pause-menu-btn:hover { background-color: #22304A; color: #E8EDF3; }
+.pause-menu-btn--danger:hover { background-color: #C0392B; color: #E8EDF3; }

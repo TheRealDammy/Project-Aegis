@@ -152,4 +152,60 @@ public static class AegisConstants
     // Format: "EMP_0001". Counter persisted in save data.
     // Never derive identity from display name.
     public const string EMPLOYEE_ID_FORMAT = "EMP_{0:D4}";
+
+    // — QA-005: Role weight tables per phase ——————————————————
+    // Authoritative values from System Designer. Update here only.
+    // Phase 1: Tier 1–2 reputation
+    public const float ROLE_WEIGHT_P1_ENGINEER = 0.60f;
+    public const float ROLE_WEIGHT_P1_RESEARCHER = 0.25f;
+    public const float ROLE_WEIGHT_P1_SALES = 0.10f;
+    public const float ROLE_WEIGHT_P1_EXECUTIVE = 0.05f;
+    // Phase 2: Tier 3 reputation
+    public const float ROLE_WEIGHT_P2_ENGINEER = 0.35f;
+    public const float ROLE_WEIGHT_P2_RESEARCHER = 0.35f;
+    public const float ROLE_WEIGHT_P2_SALES = 0.20f;
+    public const float ROLE_WEIGHT_P2_EXECUTIVE = 0.10f;
+    // Phase 3: Tier 4–5 reputation
+    public const float ROLE_WEIGHT_P3_ENGINEER = 0.20f;
+    public const float ROLE_WEIGHT_P3_RESEARCHER = 0.25f;
+    public const float ROLE_WEIGHT_P3_SALES = 0.30f;
+    public const float ROLE_WEIGHT_P3_EXECUTIVE = 0.25f;
+
+    // — World Events ———————————————————————————————————————
+    public const int WORLD_EVENT_MIN_CADENCE_WEEKS = 8;   // Earliest a new event can spawn.
+    public const int WORLD_EVENT_MAX_CADENCE_WEEKS = 16;  // Latest. Actual interval is random within this range.
+    public const int WORLD_EVENT_MAX_CONCURRENT = 2;   // No more than 2 active events at once.
+
+    // — Rival Progress ————————————————————————————————————
+    // Per-week increment in specialization branch vs. all others.
+    public const float RIVAL_PROGRESS_SPECIALIZATION = 2.0f;
+    public const float RIVAL_PROGRESS_GENERAL = 0.4f;
+    // Titan Defense has no single specialization — balanced across all branches.
+    public const float RIVAL_TITAN_PROGRESS_ALL = 0.8f;
+
+    // — Research Node Graph (M5 visual upgrade) ———————————
+    public const string USS_NODE_CONNECTOR = "node-connector";
+    public const string USS_NODE_CONNECTOR_ACTIVE = "node-connector--active";
+
+    // — Save System ———————————————————————————————————————
+    public const int SAVE_VERSION_CURRENT = 2;   // Bumped M5: ActiveWorldEvents added.
+
+    // — Settings (PlayerPrefs keys) ————————————————————————————
+    // Prefix "Aegis_" prevents collisions with other Unity tools.
+    public const string PREF_MASTER_VOLUME = "Aegis_MasterVolume";
+    public const string PREF_SFX_VOLUME = "Aegis_SFXVolume";
+    public const string PREF_MUSIC_VOLUME = "Aegis_MusicVolume";
+    public const string PREF_FULLSCREEN = "Aegis_Fullscreen";
+    public const string PREF_RESOLUTION_INDEX = "Aegis_ResolutionIndex";
+
+    // — AudioMixer exposed parameter names —————————————————————
+    // Must match the "Exposed Parameters" names set in the AudioMixer asset.
+    public const string AUDIO_PARAM_MASTER = "MasterVolume";
+    public const string AUDIO_PARAM_SFX = "SFXVolume";
+    public const string AUDIO_PARAM_MUSIC = "MusicVolume";
+
+    // — Settings defaults ————————————————————————————————————
+    public const float DEFAULT_MASTER_VOLUME = 0.8f;
+    public const float DEFAULT_SFX_VOLUME = 0.8f;
+    public const float DEFAULT_MUSIC_VOLUME = 0.6f;
 }

@@ -27,6 +27,7 @@ public class ContractManager : MonoBehaviour
     [SerializeField] private ContractTemplateSO[] _contractTemplates;
     [SerializeField] private ResearchManager _researchManager;
     [SerializeField] private EmployeeManager _employeeManager;
+    [SerializeField] private WorldEventManager _worldEventManager;
 
     // — Public Properties ——————————————————————————————————
     public IReadOnlyList<Contract> AvailableContracts => _availableContracts;
@@ -342,18 +343,35 @@ public class ContractManager : MonoBehaviour
     {
         if (_contractTemplates == null || _contractTemplates.Length == 0) return;
 
-        var eligible = GetEligibleTemplates();
+        List<ContractTemplateSO> eligible = GetEligibleTemplates();
         if (eligible.Count == 0) return;
 
         while (_availableContracts.Count < AegisConstants.CONTRACT_POOL_SIZE)
         {
-            var template = eligible[Random.Range(0, eligible.Count)];
-            var contract = GenerateFromTemplate(template);
-            _availableContracts.Add(contract);
-            OnContractOffered?.Invoke(contract);
+            // Weight selection by demand multiplier so high-demand categories appear more.
+            ContractTemplateSO template = SelectWeightedTemplate(eligible);
+            _availableContracts.Add(GenerateFromTemplate(template));
         }
 
         OnOffersUpdated?.Invoke(_availableContracts);
+    }
+
+    private ContractTemplateSO SelectWeightedTemplate(List<ContractTemplateSO> eligible)
+    {
+        float totalWeight = 0f;
+        foreach (var t in eligible)
+            totalWeight += _worldEventManager?.GetDemandMultiplier(t.ContractCategory) ?? 1f;
+
+        float roll = Random.Range(0f, totalWeight);
+        float cumulative = 0f;
+
+        foreach (var t in eligible)
+        {
+            cumulative += _worldEventManager?.GetDemandMultiplier(t.ContractCategory) ?? 1f;
+            if (roll <= cumulative) return t;
+        }
+
+        return eligible[eligible.Count - 1]; // Fallback.
     }
 
     private List<ContractTemplateSO> GetEligibleTemplates()
@@ -373,7 +391,11 @@ public class ContractManager : MonoBehaviour
     private Contract GenerateFromTemplate(ContractTemplateSO template)
     {
         float normRep = (_playerRepTier - 1) / 4f;
-        float mult = template.RewardScaleByReputation?.Evaluate(normRep) ?? 1f;
+        float repMult = template.RewardScaleByReputation?.Evaluate(normRep) ?? 1f;
+
+        // World event modifiers stack on top of reputation scaling.
+        float demandMult = _worldEventManager?.GetDemandMultiplier(template.ContractCategory) ?? 1f;
+        float rewardMult = _worldEventManager?.GetRewardMultiplier(template.ContractCategory) ?? 1f;
 
         return new Contract
         {
@@ -381,7 +403,7 @@ public class ContractManager : MonoBehaviour
             ClientRegion = "Unknown Region",
             ContractCategory = template.ContractCategory,
             ReputationTierRequired = template.MinReputationTier,
-            BaseRewardGBP = template.BaseRewardGBP * mult,
+            BaseRewardGBP = template.BaseRewardGBP * repMult * rewardMult,
             BaseCostGBP = template.BaseRewardGBP * 0.3f,
             DeadlineWeeks = template.BaseDeadlineWeeks,
             WeeksRemaining = template.BaseDeadlineWeeks,

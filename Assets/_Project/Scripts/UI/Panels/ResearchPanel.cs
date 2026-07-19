@@ -54,8 +54,35 @@ public class ResearchPanel
 
     public void Refresh()
     {
+        // Refresh node cards.
         foreach (var kvp in _nodeCards)
             RefreshNodeCard(kvp.Key, kvp.Value);
+
+        // Refresh connectors — stored as VEs with userData = childNodeId.
+        foreach (VisualElement child in GetAllConnectors())
+        {
+            if (child.userData is string nodeId)
+                UpdateConnectorState(child, nodeId);
+        }
+    }
+
+    private IEnumerable<VisualElement> GetAllConnectors()
+    {
+        // Walk all branch columns and collect connector VEs.
+        var connectors = new List<VisualElement>();
+        if (_container == null) return connectors;
+        CollectConnectors(_container, connectors);
+        return connectors;
+    }
+
+    private static void CollectConnectors(VisualElement root, List<VisualElement> results)
+    {
+        foreach (VisualElement child in root.Children())
+        {
+            if (child.ClassListContains(AegisConstants.USS_NODE_CONNECTOR))
+                results.Add(child);
+            CollectConnectors(child, results);
+        }
     }
 
     // — Private: Column —————————————————————————————————————
@@ -69,20 +96,79 @@ public class ResearchPanel
         header.AddToClassList(AegisConstants.USS_BRANCH_HEADER);
         column.Add(header);
 
-        // Add nodes in branch order (GDD chain: root → tip).
-        foreach (var kvp in _researchManager.NodeSOLookup)
-        {
-            if (kvp.Value.Branch != branch) continue;
+        // Build an ordered list of nodes for this branch (root → tip order).
+        var branchNodes = GetOrderedBranchNodes(branch);
 
-            var card = BuildNodeCard(kvp.Value);
-            _nodeCards[kvp.Key] = card;
+        for (int i = 0; i < branchNodes.Count; i++)
+        {
+            ResearchNodeSO node = branchNodes[i];
+            var card = BuildNodeCard(node);
+            _nodeCards[node.NodeId] = card;
             column.Add(card);
+
+            // Add connector AFTER each node except the last.
+            if (i < branchNodes.Count - 1)
+            {
+                ResearchNodeSO childNode = branchNodes[i + 1];
+                var connector = BuildConnector(childNode.NodeId);
+                column.Add(connector);
+            }
         }
 
         return column;
     }
 
+
+
     // — Private: Node Card ——————————————————————————————————
+
+    /// <summary>
+    /// Returns nodes for a branch in tree order (root first, tip last).
+    /// Sorted by prerequisite depth: root nodes have depth 0, each step adds 1.
+    /// </summary>
+    private List<ResearchNodeSO> GetOrderedBranchNodes(ResearchBranch branch)
+    {
+        var nodes = new List<ResearchNodeSO>();
+        foreach (var kvp in _researchManager.NodeSOLookup)
+            if (kvp.Value.Branch == branch)
+                nodes.Add(kvp.Value);
+
+        // Sort by depth (number of prerequisites in chain).
+        nodes.Sort((a, b) => GetNodeDepth(a).CompareTo(GetNodeDepth(b)));
+        return nodes;
+    }
+
+    private int GetNodeDepth(ResearchNodeSO node)
+    {
+        if (node.Prerequisites == null || node.Prerequisites.Length == 0) return 0;
+        int maxPrereqDepth = 0;
+        foreach (var prereq in node.Prerequisites)
+            if (prereq != null)
+                maxPrereqDepth = Mathf.Max(maxPrereqDepth, GetNodeDepth(prereq));
+        return maxPrereqDepth + 1;
+    }
+
+    private VisualElement BuildConnector(string childNodeId)
+    {
+        var connector = new VisualElement();
+        connector.AddToClassList(AegisConstants.USS_NODE_CONNECTOR);
+
+        // Store nodeId to allow targeted refresh of connector state.
+        connector.userData = childNodeId;
+
+        // Set initial active state based on child node state.
+        UpdateConnectorState(connector, childNodeId);
+
+        return connector;
+    }
+
+    private void UpdateConnectorState(VisualElement connector, string childNodeId)
+    {
+        if (!_researchManager.NodeStates.TryGetValue(childNodeId, out ResearchNodeState state)) return;
+
+        bool active = state != ResearchNodeState.Locked;
+        connector.EnableInClassList(AegisConstants.USS_NODE_CONNECTOR_ACTIVE, active);
+    }
 
     private VisualElement BuildNodeCard(ResearchNodeSO node)
     {

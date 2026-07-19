@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90969bea3a1cd4e4da3e1585574a7440, type: 3}
+  m_Name: PROD_LYNX
+  m_EditorClassIdentifier: 
+  ProductId: prod_satellite_monitoring
+  DisplayName: LYNX Orbital Monitor
+  Description: 
+  RequiredResearch: {fileID: 11400000, guid: 4789fd0b26fcbcd4d9c6bd86b295eb80, type: 2}
+  SatisfiesContractCategories:
+  - Satellite Intelligence
+  DevelopmentCostGBP: 85000
+  DevelopmentWeeks: 8
+  ProductTier: 2
+  RequiredRoles: 

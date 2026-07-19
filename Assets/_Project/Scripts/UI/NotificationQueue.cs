@@ -45,13 +45,20 @@ public class NotificationQueue
 
         _container.Add(banner);
 
-        // UITK built-in scheduler — no coroutines, no DOTween required.
+        // Trigger slide-in: apply --visible class one frame after insertion.
+        // Without the delay, the element starts in its final state with no transition.
+        banner.schedule.Execute(() =>
+        {
+            banner.AddToClassList("notification-banner--visible");
+        }).StartingIn(0);   // Zero delay = next frame after layout pass.
+
+        // Auto-dismiss after 4 seconds.
         banner.schedule.Execute(() =>
         {
             if (_container.Contains(banner))
                 _container.Remove(banner);
         }).StartingIn(4000);
 
-        Debug.Log($"[Notification] {type}: {title} — {body}");
+        Debug.Log($"[Notification] {type}: {title}");
     }
 }

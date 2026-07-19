@@ -19,7 +19,7 @@ public class GameSaveData
     /// Increment this when the save format changes in a breaking way.
     /// SaveManager checks this on load and can reject incompatible saves.
     /// </summary>
-    public int SaveVersion = 1;
+    public int SaveVersion = AegisConstants.SAVE_VERSION_CURRENT;   // Was literal 1
     public string SaveTimestamp;   // ISO 8601, set on save.
 
     // — Time ———————————————————————————————————————————————————
@@ -49,8 +49,8 @@ public class GameSaveData
     public List<ContractSaveData> ActiveContracts;
 
     // — Forward compatibility stubs ————————————————————————————
-    // Populated when WorldEventManager, RivalManager, MarketManager are implemented.
-    public List<string> ActiveWorldEventIds;
+    public List<ActiveWorldEventSaveData> ActiveWorldEvents;   // Populated from M5.
+    public int WeeksUntilNextWorldEvent;
     public Dictionary<string, float[]> RivalProgress;
     public Dictionary<string, float> MarketShare;
 }

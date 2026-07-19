@@ -1,0 +1,13 @@
+<linker>
+    <!-- Prevent IL2CPP from stripping Newtonsoft JSON reflection types -->
+    <assembly fullname="Newtonsoft.Json" preserve="all"/>
+    <!-- Preserve all save data classes used in reflection-based serialization -->
+    <assembly fullname="Assembly-CSharp">
+        <type fullname="GameSaveData"              preserve="all"/>
+        <type fullname="EmployeeSaveData"          preserve="all"/>
+        <type fullname="HiringCandidateSaveData"   preserve="all"/>
+        <type fullname="ActiveResearchSaveData"    preserve="all"/>
+        <type fullname="ContractSaveData"          preserve="all"/>
+        <type fullname="ActiveWorldEventSaveData"  preserve="all"/>
+    </assembly>
+</linker>
