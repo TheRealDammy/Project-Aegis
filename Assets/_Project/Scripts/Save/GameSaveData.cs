@@ -19,7 +19,7 @@ public class GameSaveData
     /// Increment this when the save format changes in a breaking way.
     /// SaveManager checks this on load and can reject incompatible saves.
     /// </summary>
-    public int SaveVersion = AegisConstants.SAVE_VERSION_CURRENT;   // Was literal 1
+    public int SaveVersion = AegisConstants.SAVE_VERSION_CURRENT;   // Now 3
     public string SaveTimestamp;   // ISO 8601, set on save.
 
     // — Time ———————————————————————————————————————————————————
@@ -53,4 +53,12 @@ public class GameSaveData
     public int WeeksUntilNextWorldEvent;
     public Dictionary<string, float[]> RivalProgress;
     public Dictionary<string, float> MarketShare;
+
+    // — Tutorial (added SaveVersion 3) ————————————————————————
+    /// <summary>True if the player has completed or skipped the tutorial.</summary>
+    public bool TutorialComplete;
+
+    // — Finance (added SaveVersion 3) —————————————————————————
+    public float FinanceCumulativeRevenue;
+    public int FinanceWeekCount;
 }

@@ -13,9 +13,19 @@ public class FinanceManager : MonoBehaviour
 
     // — Public Properties ——————————————————————————————————
     public float CashBalance { get; private set; }
+    /// <summary>
+    /// Average weekly revenue over the game's history.
+    /// Used by WinConditionManager for the financial valuation formula.
+    /// Updated at the start of each tick before salary deductions.
+    /// </summary>
+    public float WeeklyRevenueAverage { get; private set; }
 
     // — Serialized Fields ——————————————————————————————————
     [SerializeField] private EmployeeManager _employeeManager;
+
+    // - Private Fields ————————————————————————————————————
+    private float _cumulativeRevenue = 0f;
+    private int _weekCount = 0;
 
     // — Unity Lifecycle ————————————————————————————————————
     private void Start()
@@ -46,11 +56,11 @@ public class FinanceManager : MonoBehaviour
     {
         if (amount < 0f)
         {
-            Debug.LogWarning("[FinanceManager] AddRevenue called with negative amount. Use DeductCost.");
+            Debug.LogWarning("[FinanceManager] AddRevenue called with negative amount.");
             return;
         }
-
         CashBalance += amount;
+        _cumulativeRevenue += amount;   // NEW — feeds weekly average
         OnCashChanged?.Invoke(CashBalance);
     }
 
@@ -65,18 +75,26 @@ public class FinanceManager : MonoBehaviour
     public void PopulateSaveData(GameSaveData data)
     {
         data.CashBalance = CashBalance;
+        data.FinanceCumulativeRevenue = _cumulativeRevenue;
+        data.FinanceWeekCount = _weekCount;
     }
 
     public void LoadFromSaveData(GameSaveData data)
     {
         CashBalance = data.CashBalance;
         OnCashChanged?.Invoke(CashBalance);
+        _cumulativeRevenue = data.FinanceCumulativeRevenue;
+        _weekCount = data.FinanceWeekCount;
+        WeeklyRevenueAverage = _weekCount > 0 ? _cumulativeRevenue / _weekCount : 0f;
         Debug.Log($"[FinanceManager] Loaded cash: £{CashBalance:N0}.");
     }
 
     // — Private Methods ————————————————————————————————————
     private void HandleWeekTick()
     {
+        // Update average before deducting costs for this week.
+        _weekCount++;
+        WeeklyRevenueAverage = _weekCount > 0 ? _cumulativeRevenue / _weekCount : 0f;
         DeductWeeklySalaries();
     }
 

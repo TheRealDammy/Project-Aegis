@@ -22,6 +22,8 @@ public class GameHudController : MonoBehaviour
     [SerializeField] private WorldEventManager _worldEventManager;
     [SerializeField] private RivalManager _rivalManager;
     [SerializeField] private MarketManager _marketManager;
+    [SerializeField] private TutorialController _tutorialController;
+    [SerializeField] private WinConditionManager _winConditionManager;
 
     // — Nav Buttons ————————————————————————————————————————————
     private Button _navOverview;
@@ -60,6 +62,8 @@ public class GameHudController : MonoBehaviour
     private NotificationQueue _notifications;
     private PauseOverlay _pauseOverlay;
     private SettingsPanel _settingsPanel;
+    private WorldPanel _worldPanel;
+    private MarketPanel _marketPanel;
 
     // — Internal State —————————————————————————————————————————
     private VisualElement _contentArea;
@@ -105,6 +109,11 @@ public class GameHudController : MonoBehaviour
         _researchPanel?.Build();
         _contractPanel?.Build();
         _employeesPanel?.Build();
+        _worldPanel?.Build();
+        _marketPanel?.Build();
+
+        // Initialise tutorial last — all managers and panels are ready.
+        _tutorialController?.Initialise();
 
         ActivatePanel(AegisConstants.PANEL_OVERVIEW, _navOverview);
         UpdateSpeedVisualState(1f);
@@ -128,6 +137,8 @@ public class GameHudController : MonoBehaviour
         WorldEventManager.OnEventStarted += HandleWorldEventStarted;
         WorldEventManager.OnEventEnded += HandleWorldEventEnded;
         SaveManager.OnLoadAttempted += HandleLoadAttempted;
+        WinConditionManager.OnVictoryAchieved += HandleVictoryAchieved;
+        RivalManager.OnRivalProgressUpdated += HandleRivalUpdated;
     }
 
     private void OnDisable()
@@ -148,6 +159,8 @@ public class GameHudController : MonoBehaviour
         WorldEventManager.OnEventStarted -= HandleWorldEventStarted;
         WorldEventManager.OnEventEnded -= HandleWorldEventEnded;
         SaveManager.OnLoadAttempted -= HandleLoadAttempted;
+        WinConditionManager.OnVictoryAchieved -= HandleVictoryAchieved;
+        RivalManager.OnRivalProgressUpdated -= HandleRivalUpdated;
     }
 
     private void OnPause(InputAction.CallbackContext context)
@@ -280,6 +293,25 @@ public class GameHudController : MonoBehaviour
             _employeesPanel.OnAssignToContractRequested += HandleAssignToContract;
         }
 
+        // Remove the stub labels for World and Market — replace with real panel builders
+        if (_worldEventManager != null)
+        {
+            _worldPanel = new WorldPanel(_worldPanelRoot, _worldEventManager);
+        }
+        else
+        {
+            AddStubLabel(_worldPanelRoot, "WORLD — WorldEventManager not assigned");
+        }
+
+        if (_marketManager != null)
+        {
+            _marketPanel = new MarketPanel(_marketPanelRoot, _marketManager);
+        }
+        else
+        {
+            AddStubLabel(_marketPanelRoot, "MARKET — MarketManager not assigned");
+        }
+
         // Notification system — attached to root so banners float above all panels.
         _notifications = new NotificationQueue(
             _hudDocument.rootVisualElement);
@@ -341,6 +373,8 @@ public class GameHudController : MonoBehaviour
         if (panelName == AegisConstants.PANEL_RESEARCH) _researchPanel?.Refresh();
         if (panelName == AegisConstants.PANEL_CONTRACTS) _contractPanel?.Refresh();
         if (panelName == AegisConstants.PANEL_EMPLOYEES) _employeesPanel?.Refresh();
+        if (panelName == AegisConstants.PANEL_WORLD) _worldPanel?.Refresh();
+        if (panelName == AegisConstants.PANEL_MARKET) _marketPanel?.Refresh();
 
         Debug.Log($"[GameHud] Panel active: {panelName}");
     }
@@ -522,6 +556,29 @@ public class GameHudController : MonoBehaviour
           : "Load Failed",
             message,
             type);
+    }
+
+    private void HandleVictoryAchieved(VictoryType type, string description)
+    {
+        string title = type switch
+        {
+            VictoryType.Financial => "FINANCIAL VICTORY",
+            VictoryType.Technology => "TECHNOLOGY VICTORY",
+            VictoryType.Market => "MARKET VICTORY",
+            _ => "VICTORY"
+        };
+
+        // Victory notification persists longer — 10 seconds.
+        // Standard NotificationQueue shows 4s — this warrants more prominence.
+        // For post-launch: implement a dedicated victory screen overlay.
+        _notifications?.Show(title, description, NotificationQueue.Type.Success);
+        Debug.Log($"[GameHudController] Victory declared: {type}");
+    }
+
+    private void HandleRivalUpdated()
+    {
+        if (_activePanelName == AegisConstants.PANEL_MARKET)
+            _marketPanel?.Refresh();
     }
 
     // ——— Hiring ————————————————————————————————————————————————

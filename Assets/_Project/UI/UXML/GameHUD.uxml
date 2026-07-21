@@ -15,6 +15,22 @@
                 <ui:Button name="Speed4Button" text="▶▶▶" class="speed-btn" />
             </ui:VisualElement>
         </ui:VisualElement>
+        <!-- ═══════════════════════════════
+             TUTORIAL STRIP (DD-15)
+             Hidden by default. TutorialController
+             shows this on new game if tutorial
+             has not been completed.
+             ═══════════════════════════════ -->
+        <ui:VisualElement name="TutorialStrip"
+                          class="tutorial-strip"
+                          style="display: none;">
+            <ui:Label name="TutorialPrompt"
+                      class="tutorial-prompt"
+                      text="" />
+            <ui:Button name="TutorialSkipBtn"
+                       class="tutorial-skip-btn"
+                       text="SKIP TUTORIAL" />
+        </ui:VisualElement>
         <ui:VisualElement name="MainArea" class="main-area">
             <ui:VisualElement name="SideNav" class="side-nav">
                 <ui:Button name="NavOverview" text="OVR" class="nav-btn" />

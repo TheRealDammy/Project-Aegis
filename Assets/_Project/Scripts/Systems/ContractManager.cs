@@ -22,6 +22,11 @@ public class ContractManager : MonoBehaviour
     public static event Action<Contract> OnContractUnstaffed;   // Fires when countdown would tick but no engineer is assigned.
     public static event Action<IReadOnlyList<Contract>> OnOffersUpdated;
     public static event Action<IReadOnlyList<Contract>> OnActiveContractsUpdated;
+    /// <summary>
+    /// Fires when an engineer is successfully assigned to an active contract.
+    /// TutorialController subscribes for beat 4.
+    /// </summary>
+    public static event Action<Contract, Employee> OnEngineerAssigned;
 
     // — Serialized Fields ——————————————————————————————————
     [SerializeField] private ContractTemplateSO[] _contractTemplates;
@@ -119,14 +124,13 @@ public class ContractManager : MonoBehaviour
             return false;
         }
 
-        contract.AssignedEmployeeIds.Add(engineer.EmployeeId);
-        contract.HasWarnedAboutNoEngineer = false;  // Reset stall warning.
+        contract.HasWarnedAboutNoEngineer = false;
         engineer.Assignment = contractId;
 
         OnActiveContractsUpdated?.Invoke(_activeContracts);
+        OnEngineerAssigned?.Invoke(contract, engineer);   // NEW — after state is committed
 
-        Debug.Log($"[ContractManager] {engineer.Name} assigned to {contractId}. " +
-                  $"Team size: {contract.AssignedEmployeeIds.Count}.");
+        Debug.Log($"[ContractManager] {engineer.Name} assigned to {contractId}.");
         return true;
     }
 

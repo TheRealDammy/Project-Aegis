@@ -40,7 +40,9 @@ public class TimeManager : MonoBehaviour
 
     // — Public Methods —————————————————————————————————————
 
-    /// <summary>Sets simulation speed. Valid values: 0 (pause), 1, 2, 4.</summary>
+    /// <summary>Fires whenever simulation speed changes, including pause (speed = 0).</summary>
+    public static event Action<float> OnSpeedChanged;
+
     public void SetSpeed(float speed)
     {
         if (speed != 0f && speed != 1f && speed != 2f && speed != 4f)
@@ -50,6 +52,7 @@ public class TimeManager : MonoBehaviour
         }
 
         CurrentSpeed = speed;
+        OnSpeedChanged?.Invoke(CurrentSpeed);   // NEW
         Debug.Log($"[TimeManager] Speed set to {speed}x.");
     }
 

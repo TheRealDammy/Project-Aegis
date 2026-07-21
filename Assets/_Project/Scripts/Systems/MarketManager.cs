@@ -29,6 +29,22 @@ public class MarketManager : MonoBehaviour
 
     private void Start() => RecalculateShares();
 
+    /// <summary>
+    /// Returns the average player market share across all four branches (0.0–1.0).
+    /// Used by WinConditionManager for the Market Victory condition.
+    /// 0.60 = 60% average share = market victory.
+    /// </summary>
+    public float GetAveragePlayerShare()
+    {
+        if (PlayerShare.Count == 0) return 0f;
+
+        float sum = 0f;
+        foreach (float share in PlayerShare.Values)
+            sum += share;
+
+        return sum / PlayerShare.Count;
+    }
+
     // — Save / Load ————————————————————————————————————————
 
     public void PopulateSaveData(GameSaveData data)

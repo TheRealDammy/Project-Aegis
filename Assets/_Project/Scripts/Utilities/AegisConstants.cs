@@ -187,8 +187,23 @@ public static class AegisConstants
     public const string USS_NODE_CONNECTOR = "node-connector";
     public const string USS_NODE_CONNECTOR_ACTIVE = "node-connector--active";
 
-    // — Save System ———————————————————————————————————————
-    public const int SAVE_VERSION_CURRENT = 2;   // Bumped M5: ActiveWorldEvents added.
+    // — Save system (update existing constant) ————————————
+    // Was 2 — bumped M6: TutorialComplete added to GameSaveData.
+    // Replace the existing SAVE_VERSION_CURRENT line.
+    public const int SAVE_VERSION_CURRENT = 3;
+
+    // — Win Conditions (OQ-05, recorded as DD-16) —————————
+    public const long WIN_FINANCIAL_VALUATION_TARGET = 500_000_000L;
+    public const float WIN_FINANCIAL_REVENUE_MULTIPLIER = 104f;    // 2 years projected
+    public const float WIN_FINANCIAL_RESEARCH_VALUE = 2_000_000f;
+    public const float WIN_FINANCIAL_REPUTATION_VALUE = 500_000f;
+    public const float WIN_MARKET_SHARE_THRESHOLD = 0.60f;   // 60% average across branches
+    public const int WIN_TECHNOLOGY_NODE_COUNT = 17;      // All MVP research nodes
+
+    // — Tutorial UXML element names (OQ-04, recorded as DD-15) ——
+    public const string HUD_TUTORIAL_STRIP = "TutorialStrip";
+    public const string HUD_TUTORIAL_PROMPT = "TutorialPrompt";
+    public const string HUD_TUTORIAL_SKIP = "TutorialSkipBtn";
 
     // — Settings (PlayerPrefs keys) ————————————————————————————
     // Prefix "Aegis_" prevents collisions with other Unity tools.

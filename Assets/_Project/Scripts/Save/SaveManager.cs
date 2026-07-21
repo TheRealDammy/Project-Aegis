@@ -22,6 +22,7 @@ public class SaveManager : MonoBehaviour
     [SerializeField] private WorldEventManager _worldEventManager;
     [SerializeField] private RivalManager _rivalManager;
     [SerializeField] private MarketManager _marketManager;
+    [SerializeField] private TutorialController _tutorialController;
 
     // — Private ————————————————————————————————————————————
     private static readonly JsonSerializerSettings _jsonSettings = new JsonSerializerSettings
@@ -169,6 +170,7 @@ public class SaveManager : MonoBehaviour
         _worldEventManager?.PopulateSaveData(data);
         _rivalManager?.PopulateSaveData(data);
         _marketManager?.PopulateSaveData(data);
+        _tutorialController?.PopulateSaveData(data);
 
         return data;
     }
@@ -266,6 +268,9 @@ public class SaveManager : MonoBehaviour
         // 6. Reputation — fires OnTierChanged last. ContractManager and
         //    EmployeeManager are loaded and ready to handle phase/tier updates.
         _reputationManager?.LoadFromSaveData(data);
+
+        // Tutorial state — restore before any UI initialises.
+        _tutorialController?.LoadFromSaveData(data);
     }
 
     // — Private: Autosave Tick ————————————————————————————

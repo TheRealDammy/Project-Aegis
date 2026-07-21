@@ -1007,3 +1007,204 @@
 
 .pause-menu-btn:hover { background-color: #22304A; color: #E8EDF3; }
 .pause-menu-btn--danger:hover { background-color: #C0392B; color: #E8EDF3; }
+
+/* ══════════════════════════════════════════════════════════
+   TUTORIAL STRIP (DD-15)
+   Persistent contextual prompt between TopBar and MainArea.
+   Not a modal — player interacts with game while reading.
+   ══════════════════════════════════════════════════════════ */
+
+.tutorial-strip {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    height: 40px;
+    background-color: #1E3A5F;
+    border-bottom-width: 1px;
+    border-bottom-color: #0A8A8A;
+    padding-left: 16px;
+    padding-right: 16px;
+    /* Signal Teal left accent — visually distinct from top bar */
+    border-left-width: 4px;
+    border-left-color: #0A8A8A;
+}
+
+.tutorial-prompt {
+    color: #E8EDF3;
+    font-size: 12px;
+    flex-grow: 1;
+}
+
+.tutorial-skip-btn {
+    flex-shrink: 0;
+    height: 26px;
+    padding-left: 12px;
+    padding-right: 12px;
+    background-color: rgba(0,0,0,0);
+    border-width: 1px;
+    border-color: #8A9BB5;
+    border-radius: 0;
+    color: #8A9BB5;
+    font-size: 10px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.tutorial-skip-btn:hover {
+    background-color: #22304A;
+    color: #E8EDF3;
+    border-color: #E8EDF3;
+}
+
+/* ══════════════════════════════════════════════════════════
+   WORLD PANEL
+   Text-based world event status. Art: no world map yet
+   (deferred until map art assets exist). QA-009 closure.
+   ══════════════════════════════════════════════════════════ */
+
+.world-panel {
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 16px;
+}
+
+.world-event-card {
+    flex-direction: column;
+    padding: 12px;
+    margin-bottom: 8px;
+    background-color: #1A2535;
+    border-width: 1px;
+    border-color: #2E4060;
+    border-left-width: 3px;
+    border-left-color: #E8A020;  /* Amber — active world event warning tone */
+    border-radius: 0;
+}
+
+.world-event-name {
+    color: #E8EDF3;
+    font-size: 13px;
+    -unity-font-style: bold;
+    margin-bottom: 4px;
+}
+
+.world-event-timer {
+    color: #E8A020;
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+
+.world-event-desc {
+    color: #8A9BB5;
+    font-size: 11px;
+    margin-bottom: 8px;
+    white-space: normal;
+}
+
+.world-event-effect {
+    color: #0A8A8A;
+    font-size: 11px;
+}
+
+.world-stable-label {
+    color: #8A9BB5;
+    font-size: 13px;
+    padding: 24px;
+    -unity-text-align: middle-center;
+}
+
+.world-deferred-note {
+    color: #2E4060;
+    font-size: 11px;
+    margin-top: 24px;
+    padding: 12px;
+    border-width: 1px;
+    border-color: #2E4060;
+    white-space: normal;
+}
+
+/* ══════════════════════════════════════════════════════════
+   MARKET PANEL
+   Branch market share with bar visualization.
+   QA-010 closure.
+   ══════════════════════════════════════════════════════════ */
+
+.market-panel {
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 16px;
+}
+
+.market-branch-row {
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.market-branch-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.market-branch-name {
+    color: #8A9BB5;
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    width: 80px;
+    flex-shrink: 0;
+}
+
+.market-branch-pct {
+    color: #E8EDF3;
+    font-size: 14px;  /* Data size — JetBrains Mono target */
+    width: 48px;
+    -unity-text-align: middle-right;
+}
+
+.market-bar-track {
+    height: 12px;
+    background-color: #111923;
+    border-width: 1px;
+    border-color: #2E4060;
+    flex-direction: row;
+}
+
+.market-bar-player {
+    height: 12px;
+    background-color: #0A8A8A;  /* Signal Teal — player */
+}
+
+.market-bar-rivals {
+    height: 12px;
+    background-color: #2E4060;  /* Wire Grey — rivals combined */
+}
+
+.market-summary {
+    flex-direction: row;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top-width: 1px;
+    border-top-color: #2E4060;
+}
+
+.market-summary-label {
+    color: #8A9BB5;
+    font-size: 12px;
+    flex-grow: 1;
+}
+
+.market-summary-value {
+    color: #E8EDF3;
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.market-victory-close {
+    color: #E8A020;
+    font-size: 11px;
+}
+
+.market-victory-achieved {
+    color: #2DB87A;
+    font-size: 11px;
+}
